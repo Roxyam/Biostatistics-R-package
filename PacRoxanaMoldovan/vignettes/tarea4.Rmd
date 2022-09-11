@@ -1,0 +1,588 @@
+---
+title: "Tarea4. Análisis de grupos de genes"
+author: "Roxana Andreea Moldovan Moldovan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tarea4}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+doAll = TRUE
+done = FALSE
+dir_datos = "../data/"
+```  
+
+
+***  
+
+# 1. Introducción  
+
+En esta tarea, partiendo de los datos de microarrays provenientes de la 
+**tarea1**, llevaremos a cabo distintos análisis de grupos de genes **Go** 
+y **KEGG**.   
+
+&nbsp;  
+
+***
+
+# 2. Carga de datos.  
+
+## Paquetes empleados:  
+
+```{R, Paquetes, eval=doAll, warning=FALSE}
+pacman::p_load(pbapply)
+pacman::p_load(SummarizedExperiment,EnrichmentBrowser,GSEABase, tami, GSA)
+pacman::p_load(ReportingTools)
+pacman::p_load(pd.cyngene.1.0.st,org.Mmu.eg.db, GO.db)
+```
+
+## Carga de datos del experimento.
+
+```{R, Datos1, eval=doAll, warning=FALSE}
+datos="geod75759_rma.rda"
+load(paste(dir_datos, datos, sep=""))
+```  
+
+
+&nbsp;  
+
+***
+
+# 3. Obtención de grupos de genes:  
+## 3.1. Grupos de genes GO
+
+En este apartado vamos a hacer una análisis de sobre representación con los
+grupos de genes de **Go (Gene Ontology)**.  
+
+### Obtención del GeneSet  
+
+Debido a que el estudio no presentaba una base de datos de anotación adecuada
+asiciada a nuestra sonda no podemos generar el GeneSetCollection directamente,
+por ello obtenemos los grupos de genes y los identificadores **ENTREZID** 
+asociados a estos a estos a partir de **org.Mmu.eg.db**.
+A continuación, a partir de los identificadores Go, la evidencia y el 
+identificador ENTREZID, usando las funciones **GOFrame** y **GOAllFrame**, e 
+indicando el organismo, anotamos la información.   
+
+Finalmente usamos **GeneSetCollection** para generar colecciones de genes.
+
+
+```{R generacion_GeneSetCollection_Go, eval=done, warning=FALSE}
+
+# Tomamos la información de Go:
+frame <- toTable(org.Mmu.egGO2EG) 
+# Creamos un data frame con el identificador Go, la evidencia y el id del gen:
+goframeData <- data.frame(frame$go_id, frame$Evidence, frame$gene_id)
+goFrame = AnnotationDbi::GOFrame(goframeData, organism = "Macaca mulatta")
+goAllFrame = AnnotationDbi::GOAllFrame(goFrame)
+mccGOgsc_all = GSEABase::GeneSetCollection(goAllFrame, setType = GOCollection())
+
+# Guardamos la colección Go con todos los genes de Macaca mulatta:
+save(mccGOgsc_all, file = paste0(dir_datos,"mccGOgsc_all.rda"))
+```
+
+```{R Carga_Go1, eval=doAll, warning=FALSE}
+# Cargamos la colección de Go:
+load(paste0(dir_datos,"mccGOgsc_all.rda"))
+```
+
+En la colección tenemos todos los identificadores asociados a cada grupo Go,
+nos quedamos únicamente con los que estén en nuestro ExpressionSet.  
+
+```{R Eliminar_genes_Go, eval=doAll, warning=FALSE}
+# Tomamos los que tienen correspondencia con nuestros identificadores:
+
+#Función subsettingGeneSet:
+SelectSubGeneSet <- function(GS, G_ID){ 
+  # Introducimos el GeneSet y los ENTREZID
+  geneIds(GS) = geneIds(GS)[is.element( geneIds(GS), G_ID)]
+  GS
+}
+
+# Grupos de genes Go con nuestros identificadores:
+mccGOgsc_reducido <- pblapply(mccGOgsc_all, SelectSubGeneSet,
+                       G_ID=fData(geod75759_rma)$ENTREZID)
+mccGOgsc <- GeneSetCollection(mccGOgsc_reducido)
+
+```
+
+Observamos que tenemos el mismo número de grupos pero hemos eliminado los
+identificadores de genes que no se encuentran en nuestro experimento.
+
+```{R Tamaño_coleccion_Go, eval=doAll, warning=FALSE}
+paste0("Tenemos ", length(mccGOgsc_all), " grupos segun la clsificación GO.")
+paste0("El primer grupo contiene ", length(geneIds(mccGOgsc_all[[1]])), " genes.")
+
+# Una vez eliminados:
+paste0("Tenemos ", length(mccGOgsc), " grupos segun la clsificación GO.")
+paste0("El primer grupo contiene ", length(geneIds(mccGOgsc[[1]])), " genes.")
+
+```
+
+En cada grupo tenemos un numero de genes, a continuación obtendremos
+información generalizado sobre el número de genes que componen los grupos. 
+
+```{R No_genes_coleccion_Go, eval=doAll, warning=FALSE}
+
+count_Go <- pbsapply(geneIds(mccGOgsc), length)
+summary(count_Go)
+
+a = mccGOgsc[(lapply(geneIds(mccGOgsc), length) <= 1)]
+paste0(length(a), " grupos GO presenta 0 o un único gen.")
+
+```  
+
+Nos quedaremos únicamente con los grupos que presentan al menor dos genes.  
+
+```{R ELiminar_grupos_pequenios_Go, eval=doAll, warning=FALSE}
+# Tomamos los grupos con más de un gen
+mccGOgsc = mccGOgsc[(lapply(geneIds(mccGOgsc), length) > 1)]
+paste0("Al final nos quedamos con ", length(mccGOgsc), "grupos Go")
+count_Go <- pbsapply(geneIds(mccGOgsc), length)
+summary(count_Go)
+length(mccGOgsc)
+```
+
+```{R Guardado_final_Go, eval=doAll, warning=FALSE}
+# Guardamos el conjunto:
+save(mccGOgsc, file = paste0(dir_datos,"mccGOgsc.rda"))
+```
+
+
+## 3.2. Grupos de genes KEGG.
+
+En este apartado vamos a hacer una análisis de sobre representación con los
+grupos de genes de **KEGG (Kyoto Encyclopedia of Genes and Genomes)**.  
+
+### Obtención del GeneSetCollection   
+
+En primer lugar debemos descargar los datos referentes a los grupos de genes
+usando la función **getGenesets** del paquete **EnrichmentBrowser** y
+especificando:    
+
+  + El organismo específico usando su código específico de 3 letras, 
+  en este caso _Macaca mulatta_ (**mcc**).   
+  
+  + La base da datos específica, en este caso **kegg.**
+
+
+```{R  generacion_GeneSetCollection_KEGG, eval=done, warning=FALSE}
+# Obtenemos la coleccion de genes de KEGG:
+mccKEGGgsc_all <- EnrichmentBrowser::getGenesets(org = "mcc", db ="kegg", 
+                                                gene.id.type = "ENTREZID",
+                                            return.type = "GeneSetCollection")
+mccKEGGgsc_all
+
+
+# Guardamos los datos:
+save(mccKEGGgsc_all, file = (paste0(dir_datos, "mccKEGGgsc_all.rda")))
+```  
+
+```{R Carga_KEGG1, eval=doAll, warning=FALSE}
+# Cargamos los datos:
+load(paste0(dir_datos, "mccKEGGgsc_all.rda"))
+```
+
+Nos quedamos únicamente con los identificadores presentes en nuestro experimento. 
+
+```{R Eliminar_genes_KEGG, eval=doAll, warning=FALSE}
+#Función subsettingGeneSet
+SelectSubGeneSet <- function(GS, G_ID){ 
+  # Introducimos el GeneSet y los ENTREZID
+  geneIds(GS) = geneIds(GS)[is.element( geneIds(GS), G_ID)]
+  GS
+}
+
+# Grupos de genes KEGG con nuestros identificadores:
+mccKEGGgsc_reducido <- pblapply(mccKEGGgsc_all, SelectSubGeneSet,
+                       G_ID=fData(geod75759_rma)$ENTREZID)
+mccKEGGgsc <- GeneSetCollection(mccKEGGgsc_reducido)
+# Guardamos los datos:
+save(mccKEGGgsc, file = (paste0(dir_datos, "mccKEGGgsc.rda")))
+```
+
+```{R Tamaño_coleccion_KEGG, eval=doAll, warning=FALSE}
+paste0("Tenemos ", length(mccKEGGgsc_all), " grupos segun la clsificación KEGG.")
+paste0("El primer grupo contiene ", length(geneIds(mccKEGGgsc_all[[1]])), " genes.")
+
+# Una vez eliminados:
+paste0("Tenemos ", length(mccKEGGgsc), " grupos segun la clsificación KEGG.")
+paste0("El primer grupo contiene ", length(geneIds(mccKEGGgsc[[1]])), " genes.")
+
+```
+
+Encontramos 343 grupos diferentes de genes según la ruta en la que participan.  
+Algunos de estos son:
+
+```{R Ej_grupos_KEGG, eval=doAll, warning=FALSE}
+head(names(mccKEGGgsc))
+```
+
+
+En cada grupo tenemos un número de genes, a continuación obtendremos
+información generalizado sobre el número de genes que componen los grupos KEGG:
+
+```{R No_genes_coleccion_KEGG, eval=doAll, warning=FALSE}
+
+count_Go <- pbsapply(geneIds(mccKEGGgsc), length)
+summary(count_Go)
+
+a = mccKEGGgsc[(lapply(geneIds(mccKEGGgsc), length) <= 1)]
+paste0(length(a), " grupos KEGG presenta menos de 3 genes.")
+
+```  
+
+Por tanto nos quedamos con todos los grupos.  
+
+
+```{R Guardado_final_KEGG, eval=doAll, warning=FALSE}
+# Guardamos los datos:
+save(mccKEGGgsc, file = (paste0(dir_datos, "mccKEGGgsc.rda")))
+load(paste0(dir_datos, "mccKEGGgsc.rda"))
+```
+
+&nbsp;  
+
+***  
+
+# 4. Obtención del Summarized Experiment. 
+
+```{R, clase_ExpressionSet, eval=doAll, warning=FALSE}
+class(geod75759_rma)
+```  
+
+En los apartados anteriores hemos trabajado con el **ExpressionSet** de nuestros
+datos, ahora debemos trasformar el **ExpressionSet** en un 
+**SummarizedExperiment**.  
+
+```{R, Conversion_SummarizedExperiment1, eval=doAll, warning=FALSE}
+se75759 <- makeSummarizedExperimentFromExpressionSet(geod75759_rma)
+se75759
+```
+```{R, Conversion_SummarizedExperiment2, eval=doAll, warning=FALSE}
+head(rowData(se75759), 2)
+```  
+
+Como podemos observar tenemos los identificadores a nivel de sonda (**PROBEID**),
+pero nos interesa pasar de expresión a nivel de sonda a expresión a nivel
+de gen (**ENTREZID**), para ello usamos la función _**probe2gene**_.
+
+```{R, ExpressionSet1, eval=doAll, warning=FALSE}
+se75759 = EnrichmentBrowser::probe2gene(se75759, from = "PROBEID",
+                                        to = "ENTREZID")
+se75759
+rowData(se75759)
+```
+
+Añadimos una variable de 0 y 1 llamada **GROUP** que describa la segregación en
+grupos según el tratamiento.
+
+```{R, Group, eval=doAll, warning=FALSE}
+tratamiento <- colData(se75759)$Sample_treatment
+tratamiento
+grupos <- ifelse(tratamiento == "Formaldehyde", 0, 1)
+colData(se75759) <- cbind(colData(se75759), GROUP=grupos)
+head(colData(se75759),1)
+```
+
+Aplicamos un análisis de expresión diferencial empleando **limma**.
+
+```{R Limma, eval=doAll, warning=FALSE}
+se75759 = EnrichmentBrowser::deAna(expr = se75759, 
+                                   padj.method = "BH", 
+                                   de.method = "limma")
+head(rowData(se75759),2 )
+```  
+
+```{R Limma_sig, eval=doAll, warning=FALSE}
+FDR = 0.1
+sum(rowData(se75759)$ADJ.PVAL < FDR )
+``` 
+  
+Los p valores ajustados que hemos obtenido son muy cercanos a 1, por tanto, no
+sería correcto tomar un valor de FDR tan alto que nos condujese al rechazo
+de la hipótesis nula para ninguno de los genes, en consecuencia, podemos afirmar 
+que no tenemos genes con expresión diferencial en función del tratamiento.  
+
+Los resultados obtenidos coinciden con el T-test de la **tarea2.3**, utilizando
+_**rowttests**_ del paquete _**genefilter**_.  
+
+&nbsp;  
+
+***
+  
+# 5. Análisis de sobre representación.
+
+### Test de Fisher  
+
+A continuación realizamos un análisis de sobre representación con el test de
+Fisher unilateral empleando la función **sbea** y el método **ora**
+(overrepresentation analysis).
+
+```{R Fisher_KEGG, eval=doAll, warning=FALSE}
+se75759.oraKEGG <- EnrichmentBrowser::sbea(method = "ora", se = se75759,
+                                           padj.method = "BH",
+                                           gs=mccKEGGgsc, perm = 0,
+                                           alpha = 0.05)
+gsRanking(se75759.oraKEGG, signif.only = F)
+```
+
+```{R Fisher_GO, eval=doAll, warning=FALSE}
+se75759.oraGO <- EnrichmentBrowser::sbea(method = "ora", se = se75759, 
+                                         padj.method = "BH",
+                                         gs=mccGOgsc, perm = 0,
+                                         alpha = 0.05)
+gsRanking(se75759.oraGO, signif.only = F)
+```
+
+Como ya hemos mencionado anteriormente, no encontramos expresión diferencial 
+de los genes en función del tratamiento, y a través del análisis **ORA** 
+tampoco obtenemos genes sobrerepresentados en ninguno de los grupos
+funcionales definidos por KEGG o GO.
+
+&nbsp;   
+***
+
+# 6. Análisis de grupos o conjuntos de genes.  
+
+En este apartado estudiaremos si existe relación entre conjuntos de genes 
+previamente definidos, en este caso tomaremos las colecciones de genes de 
+Go y KEGG previamente creadas, y el fenotipo.  
+
+En este tipo de análisis se formulan las siguiente hipótesis nulas:      
+
+  + **Q1** : Los genes de un conjunto muestran el mismo patrón de asociación 
+  con el fenotipo que los genes pertenecientes al resto de grupos.
+  Esta hipótesis se centra en la comparación entre la asociación de los genes
+  pertenecientes a un conjunto a un fenotipo y la asociación de los genes
+  de otros conjuntos y ese fenotipo. Para esto haremos un **test competitivo**.  
+  
+  + **Q2** : El conjunto de genes no presenta ningún gen con un nivel  de 
+  expresión asociado al fenotipo estudiado. Esta hipótesis estudia la expresión
+  diferencial de los genes pertenecientes a cada conjunto. Para esto haremos un
+  **test autocontenido**.
+
+## GSA para grupos KEGG:
+
+En este apartado emplearemos **EnrichmentBrowser** para llevar a cabo un
+análisis **GSA**. Mediante este test podemos encontrar los grupos cuyos
+genes muestran diferencias estadísticamente significativas entre dos estados
+o fenotipos, en este caso el tratamiento con formaldehído.   
+Este análisis difiere del GSEA en que nos da una medida del enriquecimiento
+(estadísitico maxnean), este toma la media de las partes positivas (grupos de 
+genes positivos, es decir que en la segunda condición han aumentando su
+expresión) y la media de las partes negativas (grupos de 
+genes negativos, es decir que en la segunda condición han disminuido su
+expresión) y se queda con el máximo de ambos.   
+Para el ajuste de los p valores usamos el método de *Benjamini-Hochberg*.
+
+
+```{R GSA_KEGG, results="hide", eval=doAll, warning=FALSE, message=FALSE}
+se75759.gsaKEGG <- EnrichmentBrowser::sbea(method = "gsa", se = se75759,
+                                           padj.method = "BH",
+                                           gs=mccKEGGgsc,alpha = 0.05)   
+gsRanking(se75759.gsaKEGG, signif.only = F)
+```
+
+El número de grupos significativos encontrados es:  
+
+```{R GSA_KEGG_sig, eval=doAll, warning=FALSE}
+se75759.gsaKEGG$nr.sigs
+```  
+
+
+### Generación de informe:  
+
+No se han obtenido resultados significativos, aunque con el objetivo de mostrar
+los resultados incluiremos todos los grupos en el informe.  
+
+```{R GSA_KEGG_informe, eval=doAll, warning=FALSE}
+# Tomamos los resultados:
+tabla = se75759.gsaKEGG$res.tbl
+
+# Creamos la url para cada identificador:
+ID = tabla$GENE.SET
+KEGGID = ifelse(is.na(ID), NA, paste0("<a href='https://www.genome.jp/",
+                                      "dbget-bin/www_bget?", ID, "'>",
+                                      ID, "</a>"))
+
+final_info_KEGG = data.frame(Grupo_KEGG = KEGGID, Score = tabla$SCORE,
+                             P_val = tabla$PVAL, p_ajust=tabla$ADJ.PVAL  )  
+
+```  
+```{R GSA_KEGG_informe2, eval=doAll, warning=FALSE}
+info = final_info_KEGG
+
+f_out = "T4_GSA_KEGG.DE"
+report_dir = "Reports/"
+titulo = "geod75759 : Resultados GSA de grupos KEGG."
+
+report1 = ReportingTools::HTMLReport(shortName = f_out, 
+                                     title = titulo,
+                                     reportDirectory = report_dir)
+publish(info,report1)
+finish(report1)
+
+```   
+
+
+## Gene set analysis con tami para grupos Go
+
+En este apartado emplearemos el paquete **tami** con el fin de llevar a cabo un
+análisis de grupos de genes tanto competitivo como autocontenido usando la 
+función **GeneSetTest** con los siguientes parámetros:   
+
+  + **test** -> rowtest  
+  Realizar un análisis de expresión diferencial marginal (test de la t 
+  moderada de **Limma**).
+  + **association** -> "statistic"  
+  Empleamos el estadístico de contraste como asociación entre la expresión y el
+  fenotipo.  
+  + **correction** -> "BH"  
+  Como método de ajuste de los p-valores el método de Benjamini y Hochberg.  
+  + **GeneNullDistr** -> "randomization". Contrastamos la distribución nula de 
+  aleatorización por columna.   
+  + **alternative** -> "two-sided". Usamos un test bilateral.   
+  + **nmax** -> "100". Número de remuestreos aleatorios.   
+  
+
+### Hipótesis nula competitiva  
+
+La hipótesis nula **Ho** indica que los genes de un grupo previamente definido S
+están al menos tan frecuentemente diferentemente expresados como los genes en
+el grupo Sc.   
+Parámetros:   
+
++ **GeneSetNullDistr** = "competitive"     
+
+
+```{R GSA_tami_competitive_GO, eval=doAll, warning=FALSE}
+geod75759_GO_comp <- GeneSetTest(x = geod75759_rma,
+                              y=factor(pData(geod75759_rma)$Sample_treatment),
+                              test = rowtmod, association="statistic",
+                              correction="BH", GeneNullDistr = "randomization",
+                              GeneSetNullDistr = "competitive",
+                              alternative="two-sided", nmax = 100,
+                              id = "ENTREZID", gsc=geneIds(mccGOgsc),
+                              descriptive=mean, foutput = "geod75759_rma_comp")
+geod75759_GO_comp_df = tidy(geod75759_GO_comp)
+
+sig_GO_comp = geod75759_GO_comp_df$adjp<0.05
+```    
+
+Tomando una **FDR** de 0.05, ¿Cuántos grupos Go significativos encontramos en
+nuestro estudio?  
+
+```{R GSA_tami_competitive_GO_sig, eval=doAll, warning=FALSE}
+sum(sig_GO_comp)
+
+head(geod75759_GO_comp_df[sig_GO_comp,])
+```   
+
+### Generación de informe:  
+
+Mostrasmos en un informe los grupos significativos tonando una FDR de 0.05.
+
+```{R GSA_comp_GO_informe, eval=doAll, warning=FALSE}
+# Tomamos los resultados:
+tabla2 = geod75759_GO_comp_df[sig_GO_comp,]
+
+# Creamos la url para cada identificador:
+ID = tabla2$GO
+GOID = ifelse(is.na(ID), NA, tami::go2url(ID))
+
+final_comp_GO = data.frame(Grupo_GO = GOID, satistic = tabla2$statistic,
+                             p_value = tabla2$rawp, p_ajust=tabla2$adjp)  
+
+```   
+  
+  
+```{R GSA_comp_GO_informe2, eval=doAll, warning=FALSE}
+info = final_comp_GO
+
+f_out = "T4_GSA_comp_GO.DE"
+report_dir = "Reports/"
+titulo = "geod75759 : Resultados GSA de grupos Go (hipotesis competitiva). "
+
+reportGO1 = ReportingTools::HTMLReport(shortName = f_out, 
+                                       title = titulo,
+                                       reportDirectory = report_dir)
+publish(info,reportGO1)
+finish(reportGO1)
+
+```  
+
+### Hipótesis nula autocontenida
+
+La hipótesis nula mantiene que ningún gen perteneciente a un grupo S está
+diferencialmente expresado.   
+Parámetros:    
+
++ **GeneSetNullDistr** = "self-contained"   
+ 
+
+```{R GSA_tami_self-contained_GO, eval=doAll, warning=FALSE}
+geod75759_GO_self <- GeneSetTest(x = geod75759_rma,
+                              y=factor(pData(geod75759_rma)$Sample_treatment),
+                              test = rowtmod, association="statistic",
+                              correction="BH", GeneNullDistr = "randomization",
+                              GeneSetNullDistr = "self-contained",
+                              alternative="two-sided", nmax = 100,
+                              id = "ENTREZID", gsc=geneIds(mccGOgsc),
+                              descriptive=mean, foutput = "geod75759_rma_self")
+geod75759_GO_self_df = tidy(geod75759_GO_self)
+
+sig_GO_self = geod75759_GO_self_df$adjp<0.05
+```    
+
+Tomando una **FDR** de 0.05, ¿Cuántos grupos Go significativos encontramos en
+nuestro estudio?  
+
+```{R GSA_tami_contained_GO_sig, eval=doAll, warning=FALSE}
+sum(sig_GO_self)
+
+head(geod75759_GO_self_df[sig_GO_self,])
+```   
+  
+### Generación de informe:  
+
+Usamos los grupos de genes significativos tomando una **FDR** de 0.05:  
+
+```{R GSA_self_GO_informe, eval=doAll, warning=FALSE}
+# Tomamos los resultados:
+tabla3 = geod75759_GO_self_df[sig_GO_self,]
+
+# Creamos la url para cada identificador:
+ID = tabla3$GO
+GOID = ifelse(is.na(ID), NA, tami::go2url(ID))
+
+final_self_GO = data.frame(Grupo_GO = GOID, satistic = tabla3$statistic,
+                            p_value = tabla3$rawp, p_ajust=tabla3$adjp)  
+
+```   
+
+  
+  
+```{R GSA_self_GO_informe2, eval=doAll, warning=FALSE}
+info = final_self_GO
+
+f_out = "T4_GSA_self_GO.DE"
+report_dir = "Reports/"
+titulo = "geod75759 : Resultados GSA de grupos Go (hipotesis autocomparativa). "
+
+reportGO2 = ReportingTools::HTMLReport(shortName = f_out, 
+                                      title = titulo,
+                                      reportDirectory = report_dir)
+publish(info,reportGO2)
+finish(reportGO2)
+
+```    
+   
+   
+***  
+

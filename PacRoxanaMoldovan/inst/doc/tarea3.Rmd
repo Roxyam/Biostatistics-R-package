@@ -1,0 +1,374 @@
+---
+title: "Tarea3. PRJNA821482: Construyendo un SummarizedExperiment"
+author: "Roxana Andreea Moldovan Moldovan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tarea3}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{R Parametros ,include=FALSE}
+doAll = TRUE #Lo que debemos hacer cada vez que se ejecuta
+done = FALSE #Marcamos así los pasos ya terminado
+doafter = TRUE #Pasos finales una vez tenemos los datos
+dir_datos = "../data/"
+```
+
+***  
+
+# 1. Introducción   
+
+En esta tarea construiremos un SummarizedExperiment a partir de un estudio de 
+RNA-seq, incluyendo la descarga con **SRA-Toolkit**, el alineamiento con 
+**bowtie2** y la inclusión de toda la información disponible en el 
+SummarizedExperiment.  
+
+## Datos del exprimento:
+
+Experimento: [PRJNA821482](https://www.ncbi.nlm.nih.gov/bioproject/821482).  
+
+## Información relevante:
+
+### Hypoxia promotes erythroid differentiation (human)  
+
+En esta estudio se pretende estudiar el efecto de la hipoxia (crecimiento en
+ausencia de oxigeno) de las células madre y progenitores hematopoyéticos (HSPC) 
+en humanos. 
+Para ello se toman muestras de dos líneas celulares **HSC** y  **K562**, que se
+corresponden a células madre hematopoyéticas y linfoblastos inmortales 
+obtenidas de un paciente de 53 años con leucemia mieloide crónica. 
+Ambos tipos celulares se han cultivado en presencie y ausencia de oxígeno 
+(**Normoxia** e **Hipoxia**). Para cada experimento se han realizado 3 
+repeticiones obteniendo así 12 muestras que se  han secuneciado con 
+**Illumina NovaSeq 6000**.  
+  
+&nbsp;  
+
+***
+
+# 2. Obtención de datos
+
+## Descaraga de datos:  
+
+Vamos al SRA Run Selector, donde encontramos la información del experimento.
+El botón _**Accesion List**_ nos permite guardar los nombres de los datos que
+emplearemos en un fichero llamado _SRR_Acc_List.txt_.  
+
+Mientras que _**Metadata**_ nos permite guardar las variables fenotípicas 
+y covariables de cada muestra en el fichero _SraRunTable.txt_.  
+
+Siempre trabajamos desde el mismo directorio.
+
+Para descargar los datos empelaremos **prefetch** de **SRA-Toolkit**.
+
+
+```{bash Directorios, eval=done}
+
+# Creamos el directorio que contendrá los datos: 
+mkdir PRJNA821482
+mkdir PRJNA821482/sra
+
+```
+
+```{bash Descarga_SRA, eval=done}
+
+# Descargamos los datos en el directorio PRJNA821482/sra
+prefetch --option-file SRR_Acc_List.txt --output-directory PRJNA821482/sra
+
+```
+
+Tenemos la información contenida en ficheros SRA, debemos pasar estos a
+FASTQ, para ello usaremos la opción **fasta-dump** de **SRA-Toolkit**.  
+
+```{bash FASTQ, eval=done}
+# Trabajamos desde el mismo directorio, outdir me dice donde guardar los fastq:
+
+# Convertimos los fasta a fastq:
+cat SRR_Acc_List.txt | parallel -j 4 fastq-dump --split-files PRJNA821482/sra/{}/{}.sra --outdir PRJNA821482/
+```
+
+### Eliminamos los .sra   
+
+Una vez llevada a cabo la conversión de _.sra_ a _.fastq_ eliminaremos el
+directorio _**PRJNA821482/sra**_ con el fin de liberar espacio, mientras que
+mantenemos los fastq en el directorio _**PRJNA821482**_ . 
+
+```{bash Elimina_sra, eval=done}
+#Eliminamos el directorio que contenía los ficheros sra:
+rm -r PRJNA821482/sra
+```  
+
+&nbsp;  
+
+***
+
+# 3. Alineamiento
+Para llevar a cabo el alineamiento vamos a usar **Bowtie2**, un software de
+alineamiento sobre un genoma de referencia.
+
+## Descargamos el genoma de referencia
+
+El organismo de estudio es Homo sapiens[Taxonomy ID: 9606].
+Descargamos su genoma de referencia más reciente (GRCh38) partir de la web de 
+[Ilumina](https://support.illumina.com/sequencing/sequencing_software/igenome.html)
+y la almacenaremos en el directorio **PRJNA821482/referencia**.  
+
+```{bash Ref, eval=done}
+# Descargamos el genoma de referencia en el directorio PRJNA821482/referencia
+wget http://igenomes.illumina.com.s3-website-us-east-1.amazonaws.com/Homo_sapiens/NCBI/GRCh38/Homo_sapiens_NCBI_GRCh38.tar.gz -P PRJNA821482/referencia
+```
+
+```{bash Descomprimir, eval=done}
+
+# Descomprimimos la información descargada:
+# los resultados descomprimidos seguirán en el directorio PRJNA821482/referencia
+tar -xvzf PRJNA821482/referencia/Homo_sapiens_NCBI_GRCh38.tar.gz --directory PRJNA821482/referencia
+```  
+
+## Alineamiento   
+
+```{bash Alineamiento, eval=done}
+
+# Fijamos la ruta en la que encontramos el genoma de referencia
+ruta_genoma=PRJNA821482/referencia/Homo_sapiens/NCBI/GRCh38/Sequence/Bowtie2Index
+bt2_idx="$ruta_genoma"/genome
+
+# Los ficheros fastq tiene el nombre del identificador seguido de _1 o _2 .fastq
+# Listamos el la ruta de los ficheros fastq_1 a alinear:
+ls PRJNA821482/*_1.fastq > lista_fastq.txt
+
+# Tomamos el nombre de los ficheros sin extensión y los alineamos.
+# Los ficheros se guardaran en el mismo directorio que los fastq (PRJNA821482)
+cut -d "_" -f 1 lista_fastq.txt | parallel -j 10 bowtie2 -x $bt2_idx -1 {}_1.fastq -2 {}_2.fastq -S {}.sam
+```  
+
+## Conversión de SAM a BAM  
+
+Con ayuda de **SamTools** llevamos a cabo la conversión de los fichero .bam
+obtenidos con **bowtie2** a archivos .sam
+
+```{bash Conversion_SAM_BAM, eval=done}  
+
+# Guardamos el nombre de los ficheros sam del directorio PRJNA821482
+ls PRJNA821482/*.sam > lista_sam.txt
+
+# Listamos el nombre de los ficheros sin extension y convertimos de sam a bam:
+cut -d "." -f 1 lista_sam.txt | parallel -j 2 samtools view {}.sam -S -b -o {}.bam --threads 4
+```
+
+### Eliminamos .fastq y .sam   
+
+```{bash Elimina_fastq_sam, eval=done}
+#Eliminamos los dicheros .fastq y .sam para liberar espacio
+rm PRJNA821482/*.fastq
+rm PRJNA821482/*.sam
+```
+
+### Ordenamos las lecturas 
+
+Usamos la opción _**sort**_ de **samtools** para ordenar las lecturas.  
+
+```{bash Ordenar, eval=done}
+
+# Tomamos el nombre de los ficheros y ordenamos
+
+cut -d "." -f 1 lista_sam.txt | parallel -j 2 samtools sort {}.bam -o {}_sort.bam --threads  4
+```  
+  
+&nbsp;  
+
+***  
+
+# 4. Conteo  
+
+Con ayuda de **Rsamtools**, a partir de la anotación de los genes y los
+resultados obtenidos tras el alineamiento para cada una de las muestras, podemos
+construir la matriz de conteos.
+
+## Paquetes A cargar
+```{R, Librerias, eval=doafter, warning=FALSE}
+# Carga de paquetes:
+pacman::p_load(Rsamtools,GenomicFeatures, GenomicAlignments,S4Vectors)
+```
+
+
+```{R Conteo, eval=done, warning=FALSE}
+
+# Listamos los fichero sort.bam con su ruta:
+indir = getwd()
+fich_bam <- list.files(path = paste0(indir, "/PRJNA821482"),
+                       pattern = "*.sort.bam", full.names = TRUE)
+
+#Creamos una referencia a estos:
+bamLst = Rsamtools::BamFileList(fich_bam, index=character(),
+                                yieldSize=100000, obeyQname = TRUE)
+
+
+# Fijamos la ruta del fichero genes.gtf
+ruta_gtf= paste0(indir,"/PRJNA821482/referencia/Homo_sapiens/NCBI/GRCh38",
+                 "/Annotation/Archives/archive-2015-08-11-09-31-31",
+                 "/Genes/genes.gtf")
+
+# Generamos un objeto de tipo TxDb a partir de estos:
+txdb = makeTxDbFromGFF(ruta_gtf, format="gtf", organism = "Homo sapiens")
+
+# Obtenemos los datos de anotación:
+genes = exonsBy(txdb, by="gene")
+
+# Relacionamos las lecturas con las características genómicas:
+PRJNA821482 <- summarizeOverlaps(features = genes, 
+                                 read = bamLst,
+                                 mode= "Union",
+                                 singleEnd=FALSE, # Usa pair-ends
+                                 ignore.strand=TRUE,
+                                 fragments=FALSE)
+
+save(PRJNA821482, file=(paste0(dir_datos,"PRJNA821482_brutos.rda")))
+```
+
+
+## Información del experimento
+
+```{R Carga_datos, eval=doafter, warning=FALSE, echo=F}
+# Cargamos los datos:
+load(paste0(dir_datos,"PRJNA821482_brutos.rda"))
+
+```  
+
+Nos encontramos ante un Ranged Summarized Experiment, esto es importante 
+ya que posteriormente usaremos el paquete **SummarizedExperiment** para
+trabajar con los datos.
+
+```{R Dim, eval=doafter, warning=FALSE }
+pacman::p_load(SummarizedExperiment, GenomicRanges)
+class(PRJNA821482)
+dim(PRJNA821482)
+```  
+
+Disponemos de 33121 genes y 12 muestras.
+
+Tenemos una matriz de conteo cuyas columnas se corresponden con muestras y
+cuyas filas son los genes.
+
+```{R Head, eval=doafter, warning=FALSE}
+head(assay(PRJNA821482),2)
+```  
+
+### SummarizedExperiment  
+
+```{R Variables_fenotipicas, eval=doafter, warning=FALSE}
+
+# Obtenemos los metadatos:
+metadat <- read.table( paste0(dir_datos, "SummarizedExperiment/SraRunTable.txt"),
+                      sep = ",", header = T)
+
+# Creamos las variables de tipo factor
+TipoCelular <- factor(c(0,0,0,0,0,0,1,1,1,1,1,1), levels = 0:1,
+                     labels = c("HSC", "K562"))
+Tratamiento <- factor(c(0,0,0,1,1,1,0,0,0,1,1,1), levels = 0:1,
+                      labels = c("Hypoxia", "Normoxia"))
+# Añadimos la información a colData
+d <- DataFrame(Run=metadat$Run, Muestra = metadat$Library.Name,
+               TipoCelular=TipoCelular, Tratamiento=Tratamiento,  
+               BioProject = metadat$BioProject )
+colData(PRJNA821482, use.names=T) = d
+
+# Asignamos estos nombres a las columnas
+colnames(PRJNA821482) <- colData(PRJNA821482)$Run
+
+head(colData(PRJNA821482), 1)
+
+```  
+
+### Datos del experimento
+
+```{R Expermient_data, eval=doafter}
+info_ex <- list(name = "PRJNA821482", organism = "Homo sapiens",
+                type = "Expression profiling by high throughput sequencing",
+                lab = "Beijing Institute of Radiation Medicine",
+                contact ="quanc1989@gmail.com",
+                title = paste0("Hypoxia promotes erythroid differentiation",
+                " throughautophagy induced by the HIF/REDD1/mTORC1 signaling",
+                " axis"),
+                abstract = paste0("For hematopoietic stem and progenitor cells",
+                " (HSPCs), hypoxia is a specific microenvironment known as the",
+                " hypoxic niche. The role of hypoxia in maintaining quiescence,",
+                " self-renewal and proliferation of HSPCs has been more",
+                " elaborated. What remains unclear is   the regulation of",
+                " hypoxia on HSPC differentiation, especially on the",
+                " differentiation of HSPCs into erythrocytes. In this study,",
+                " we show that hypoxia evidently accelerates erythroid",
+                " differentiation, and in this process effectively enhances",
+                " autophagy which rapidly supplies cellular components through",
+                " degradation of organelles or proteins to meet the needs of",
+                " cell stress or development. In order to ascertain whether",
+                " autophagy mediates the erythroid differentiation promoted",
+                " by hypoxia, we analyze the perturbation of erythroid",
+                " differentiation after pharmacological and genetic",
+                " interference with autophagy, and address that autophagy is",
+                " required for hypoxia-accelerated erythroid differentiation.",
+                " Transcriptomics reveals HIF-1 and mTORC1 pathways may",
+                " function as the upstream of autophagy to regulate erythroid",
+                " differentiation under hypoxia. We further determine that",
+                " mTORC1 signaling is suppressed by hypoxia to relieve its",
+                " inhibition of autophagy. In addition, we also discover a",
+                " new regulatory pattern that with the process of erythroid",
+                " differentiation, mTORC1 activity gradually decreases and",
+                " autophagy activity increases concomitantly. Moreover, we",
+                " provide evidence that HIF-1 target gene REDD1, which",
+                " inhibits mTORC1 activity, is dramatically upregulated under",
+                " hypoxia. Silencing REDD1 expression activates mTORC1",
+                " signaling and impairs the enhanced autophagy and the",
+                " accelerated erythroid differentiation under hypoxia.",
+                " Together, our study reveals that hypoxia is conductive to",
+                " accelerating erythroid differentiation, in which autophagy",
+                " induced by the HIF-1/REDD1/mTORC1 pathway plays a pivotal",
+                " role."),
+                url="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE199778")
+metadata(PRJNA821482) <- info_ex
+
+```  
+
+### Anotación
+
+```{R Anotacion, eval=doafter,warning=FALSE}
+pacman::p_load(AnnotationDbi,org.Hs.eg.db)
+
+# Tomamos otros identificadores
+rowData(PRJNA821482)
+anot <- AnnotationDbi::select(org.Hs.eg.db, keys = rownames(PRJNA821482),
+                             columns = c("ENTREZID","ENSEMBL"),
+                              keytype = "ALIAS")
+
+# Eliminamos las sondas y genes repetidos:
+a <- match(unique(anot$ENTREZID),anot$ENTREZID)
+datos_anot1 <- anot[a,]
+
+b <- match(unique(datos_anot1$ALIAS),datos_anot1$ALIAS)
+datos_anot2 <- datos_anot1[b,]
+
+# Hacemos la correspondencia entre los identificadores y las columnas
+indice = match(rownames(PRJNA821482), datos_anot2$ALIAS)
+rowData(PRJNA821482) = datos_anot2[indice,]
+
+# Asignamos los datos y eliminamos las sondas que no se corresponden con genes:
+PRJNA821482 <- PRJNA821482[which(!is.na(rowData(PRJNA821482)$ENTREZID)),]
+```
+
+La información de la que disponemos en el SumarizedExperiment es:  
+
+```{R Info, eval=doafter, warning=FALSE}
+(PRJNA821482)
+```
+
+### Guardado
+
+```{R Guardado_final, eval=doafter, warning=FALSE}
+save(PRJNA821482, file=(paste0(dir_datos,"PRJNA821482.rda")))
+```
+
+&nbsp;  
+
+***

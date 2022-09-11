@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Roxana Andreea Moldovan Moldovan" />
+
+<meta name="date" content="2022-06-11" />
+
+<title>Tarea 5. Expresión diferencial con datos RNA-Seq</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Tarea 5. Expresión diferencial con datos
+RNA-Seq</h1>
+<h4 class="author">Roxana Andreea Moldovan Moldovan</h4>
+<h4 class="date">2022-06-11</h4>
+
+
+
+<hr />
+<div id="introducción" class="section level1">
+<h1>1. Introducción</h1>
+<p>En esta tarea llevaremos a cabo un análisis de la expresión
+diferencial a partir de los datos de la <strong>Tarea 3</strong> <a href="https://www.ncbi.nlm.nih.gov/bioproject/821482">PRJNA821482</a>.</p>
+<p>En este estudio se analiza el patrón de expresión génica mediante
+RNA-seq de 12 muestras correspondientes a la exposición a
+<strong>Normoxia</strong> e <strong>Hipoxia</strong> de dos líneas
+celulares (<strong>HSC</strong> y <strong>K562</strong>) por
+triplicado.</p>
+<p> </p>
+<hr />
+</div>
+<div id="carga-de-datos" class="section level1">
+<h1>2. Carga de datos</h1>
+<div id="paquetes-empleados" class="section level2">
+<h2>Paquetes empleados:</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(edgeR,SummarizedExperiment, ggplot2, pbapply, limma, </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>               DESeq2, ReportingTools)</span></code></pre></div>
+</div>
+<div id="carga-de-datos-del-experimento." class="section level2">
+<h2>Carga de datos del experimento.</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>datos<span class="ot">=</span><span class="st">&quot;PRJNA821482.rda&quot;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">paste</span>(dir_datos, datos, <span class="at">sep=</span><span class="st">&quot;&quot;</span>))</span></code></pre></div>
+<p> </p>
+<hr />
+</div>
+</div>
+<div id="analisis-de-expresión-diferencial." class="section level1">
+<h1>3. Analisis de expresión diferencial.</h1>
+<div id="edger-clásico" class="section level2">
+<h2>3.1 edgeR clásico</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Datos fenotípicos de la primera muestra:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colData</span>(PRJNA821482) </span></code></pre></div>
+<pre><code>## DataFrame with 12 rows and 5 columns
+##                     Run     Muestra TipoCelular Tratamiento  BioProject
+##             &lt;character&gt; &lt;character&gt;    &lt;factor&gt;    &lt;factor&gt; &lt;character&gt;
+## SRR18537220 SRR18537220  GSM5984186         HSC    Hypoxia  PRJNA821482
+## SRR18537221 SRR18537221  GSM5984185         HSC    Hypoxia  PRJNA821482
+## SRR18537222 SRR18537222  GSM5984184         HSC    Hypoxia  PRJNA821482
+## SRR18537223 SRR18537223  GSM5984183         HSC    Normoxia PRJNA821482
+## SRR18537224 SRR18537224  GSM5984182         HSC    Normoxia PRJNA821482
+## ...                 ...         ...         ...         ...         ...
+## SRR18537227 SRR18537227  GSM5984179        K562    Hypoxia  PRJNA821482
+## SRR18537228 SRR18537228  GSM5984178        K562    Hypoxia  PRJNA821482
+## SRR18537229 SRR18537229  GSM5984177        K562    Normoxia PRJNA821482
+## SRR18537230 SRR18537230  GSM5984176        K562    Normoxia PRJNA821482
+## SRR18537231 SRR18537231  GSM5984175        K562    Normoxia PRJNA821482</code></pre>
+<p>Como hemos indicado anteriormente tenemos datos relativos de
+expresión bajo dos condiciones experimentales y dos líneas celulares
+distintas.<br />
+Para este primer análisis nos centraremos en el efecto se la ausencia de
+oxígeno sobre la expresión, para ello tomaremos la variable fenotípica
+<em><strong>Tratamiento</strong></em> que presenta dos niveles:</p>
+<ul>
+<li><strong>Hypoxia</strong> -&gt; Crecimiento en ausencia de
+oxígeno.<br />
+</li>
+<li><strong>Normoxia</strong> -&gt; Crecimiento en presencia de
+oxígeno.</li>
+</ul>
+<div id="estudio-de-los-datos" class="section level3">
+<h3>Estudio de los datos:</h3>
+<p>Construimos un objeto de tipo <strong>DGEList</strong></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dge <span class="ot">&lt;-</span> edgeR<span class="sc">::</span><span class="fu">DGEList</span>(<span class="at">counts =</span> <span class="fu">assay</span>(PRJNA821482), </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">group =</span> <span class="fu">colData</span>(PRJNA821482)<span class="sc">$</span>Tratamiento)</span></code></pre></div>
+<p>Describimos el tamaños de las librerías:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dge<span class="sc">$</span>samples[,<span class="st">&quot;lib.size&quot;</span>])</span></code></pre></div>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+##  7711465  8029019  8498422  8585716  8788620 10109450</code></pre>
+<p>¿Qué porcentaje de genes no presentan anotación?</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>total <span class="ot">=</span> <span class="fu">nrow</span>(<span class="fu">rowData</span>(PRJNA821482))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># funcion que calcula el procentaje de genes no anotados:</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>porcent <span class="ot">&lt;-</span> <span class="cf">function</span>(x, t){</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">=</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(x))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>( s<span class="sc">/</span>t <span class="sc">*</span><span class="dv">100</span>, <span class="st">&quot;%&quot;</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">paste0</span>(<span class="st">&quot;Encontramos &quot;</span>, total, <span class="st">&quot; genes, de estos no presentan anotación:&quot;</span>)</span></code></pre></div>
+<pre><code>## [1] &quot;Encontramos 25189 genes, de estos no presentan anotación:&quot;</code></pre>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">rowData</span>(PRJNA821482), porcent, total)  </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>s</span></code></pre></div>
+<pre><code>##               ALIAS            ENTREZID             ENSEMBL 
+##                &quot;0%&quot;                &quot;0%&quot; &quot;9.20639961888126%&quot;</code></pre>
+<p>El 9,2% de los genes no están atontados según ENSEMBL.</p>
+</div>
+<div id="eliminación-de-filas-con-conteos-bajos" class="section level3">
+<h3>Eliminación de filas con conteos bajos:</h3>
+<p>Debemos tener en cuenta que en algunos casos señales pequeñas pueden
+deberse al ruido y no a la verdadera expresión del gen.<br />
+Por otro lado, incluso si de expresiones bajas se tratase, estas no nos
+ofrecen mucha información y no es fiable desde el punto de vista
+estadístico.<br />
+Con el fin de solventarlo:<br />
+* Determinamos los conteos por millón de cada gen para cada una de las
+muestras usando la función <strong>cpm</strong>.<br />
+* Tomamos las que presentan un conteo mayor de 0,5. * Si tenemos en más
+de dos muestras conteos de más de 0,5 determinamos que el gen se
+expresa.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Conteos por millon:  </span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>c <span class="ot">&lt;-</span> <span class="fu">cpm</span>(PRJNA821482)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>mantener <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(c <span class="sc">&gt;</span> <span class="dv">0</span>,<span class="dv">5</span>) <span class="sc">&gt;</span> <span class="dv">2</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(mantener)</span></code></pre></div>
+<pre><code>## mantener
+## FALSE  TRUE 
+##  6497 18692</code></pre>
+<p>Observamos que 6497 presentan expresiones muy bajas. Los eliminamos y
+recalculamos el tamaño de las librerías:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>dge <span class="ot">&lt;-</span> dge[mantener, keep.lib.sizes<span class="ot">=</span><span class="cn">FALSE</span>]</span></code></pre></div>
+<p>Describimos el tamaños de las librerías nuevamente:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dge<span class="sc">$</span>samples[,<span class="st">&quot;lib.size&quot;</span>])</span></code></pre></div>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+##  7711207  8028604  8498140  8585385  8788336 10109028</code></pre>
+<p>Lo representamos:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(dge<span class="sc">$</span>samples, <span class="fu">aes</span>(<span class="at">y=</span> lib.size, <span class="at">x =</span><span class="fu">row.names</span>(dge<span class="sc">$</span>samples),</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">fill=</span>lib.size)) <span class="sc">+</span> </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>                <span class="fu">geom_col</span>() <span class="sc">+</span> <span class="fu">coord_flip</span>() <span class="sc">+</span> <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>                <span class="fu">xlab</span>(<span class="st">&quot;Muestra&quot;</span>) <span class="sc">+</span>  <span class="fu">ylab</span>(<span class="st">&quot;Tamaño libreria&quot;</span>)</span></code></pre></div>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Fig1. Representación del tamaño de las librerias por muestra." width="80%" />
+<p class="caption">
+Fig1. Representación del tamaño de las librerias por muestra.
+</p>
+</div>
+</div>
+<div id="estimamos-los-parámetros-de-dispersión" class="section level3">
+<h3>Estimamos los parámetros de dispersión:</h3>
+<div id="parámetro-de-dispersión-común-para-todos-los-genes" class="section level4">
+<h4>Parámetro de dispersión común para todos los genes:</h4>
+<p>Estimamos un solo parámetro de dispersión común para todos los
+genes.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>dge.c <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">estimateCommonDisp</span>(dge)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>et.c <span class="ot">=</span> <span class="fu">exactTest</span>(dge.c)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="fu">paste0</span>(<span class="st">&quot;La dispersión obtenida es &quot;</span>, dge.c<span class="sc">$</span>common.dispersion)</span></code></pre></div>
+<pre><code>## [1] &quot;La dispersión obtenida es 0.532404658953035&quot;</code></pre>
+<p>Mostramos los más significativos:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(et.c, <span class="dv">2</span>)</span></code></pre></div>
+<pre><code>## Comparison of groups:  Normoxia-Hypoxia 
+##              logFC   logCPM       PValue          FDR
+## MT1HL1   -6.836871 3.315645 8.269385e-16 1.545713e-11
+## C6orf223 -5.833936 5.127945 2.903447e-14 2.713561e-10</code></pre>
+<p> </p>
+<p>Fijando un nivel de significación de 0.05, ¿Cuántos genes parecen
+mostrar expresión diferencial en función de su exposición a oxígeno?</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(et.c<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>]<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 776</code></pre>
+</div>
+</div>
+<div id="ajuste-de-los-resultados-obtenidos" class="section level3">
+<h3>Ajuste de los resultados obtenidos:</h3>
+<p>Hemos asumido una dispersión común para todos los genes, pero para
+poder interpretar los resultados debemos ajustar los p valores
+obtenidos, para ello empleamos el método de
+<strong>Benjamini-Hochberg</strong>.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>p_valores <span class="ot">&lt;-</span> et.c<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>]</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>pv_ajust <span class="ot">&lt;-</span> <span class="fu">p.adjust</span>(p_valores, <span class="st">&quot;BH&quot;</span>)</span></code></pre></div>
+<p>Fijando un FDR de 0.05, ¿Cuántos genes realmente presentan
+diferencias significativas en las medias de los conteos en función del
+tratamiento?</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(pv_ajust <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 89</code></pre>
+<p>Como el enunciado nos indica hemos asumido una dispersión común,
+aunque en algunos casos, sobre todo si el tamaño de las librerías es
+grande esta asunción nos puede conducir a errores, por lo que repetimos
+el análisis calculando la dispersión por gen.</p>
+<div id="parámetro-de-dispersión-distinta-para-cada-genes" class="section level4">
+<h4>Parámetro de dispersión distinta para cada genes:</h4>
+<p>En este caso asumimos dispersión distinta para cada uno de los
+genes.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>dge.t <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">estimateTagwiseDisp</span>(dge.c)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>et.t <span class="ot">=</span> <span class="fu">exactTest</span>(dge.t)</span></code></pre></div>
+<p>Mostramos los más significativos:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(et.t, <span class="dv">2</span>)</span></code></pre></div>
+<pre><code>## Comparison of groups:  Normoxia-Hypoxia 
+##              logFC   logCPM       PValue          FDR
+## MIR210HG -4.306703 4.837212 1.593164e-19 2.977942e-15
+## ALDOC    -2.708550 6.144788 2.753279e-15 2.573215e-11</code></pre>
+<p> </p>
+<p>Fijando un nivel de significación de 0.05 y asumiendo dispersiones
+distintas, ¿Cuántos genes parecen mostrar expresión diferencial en
+función de su exposición a oxígeno?</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(et.t<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>]<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 514</code></pre>
+</div>
+</div>
+<div id="ajuste-de-los-resultados-obtenidos-1" class="section level3">
+<h3>Ajuste de los resultados obtenidos:</h3>
+<p>Hemos asumido una dispersiones distintas para los genes, pero para
+poder interpretar los resultados debemos corregir los p valores
+obtenidos, para ello empleamos el método de
+<strong>Benjamini-Hochberg</strong>.</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>p_valores_t <span class="ot">&lt;-</span> et.t<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>]</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>pv_ajust_t <span class="ot">&lt;-</span> <span class="fu">p.adjust</span>(p_valores_t, <span class="st">&quot;BH&quot;</span>)</span></code></pre></div>
+<p>Fijando un FDR de 0.05, ¿Cuántos genes realmente se expresan
+diferencialmente?</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(pv_ajust_t <span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 31</code></pre>
+<p>De esta forma, únicamente 31 genes presentan diferencias
+significativas en las medias de los conteos en función de la presencia
+de oxigeno en el medio.</p>
+</div>
+<div id="combinación-de-resultados" class="section level3">
+<h3>Combinación de resultados:</h3>
+<p>Con el fin de mostrar los resultados en un informe tomaremos los
+genes que presentan expresión diferencial en alguno de los test llevados
+a cabo con<br />
+<strong>edgeR</strong> (asumiendo o no dispersión común de los genes),
+basandonos en los pvalores ajustados con el método de
+<strong>Benjamini-Hochberg</strong> con una FDR de 0.05.<br />
+Como información tenemos:</p>
+<ul>
+<li><strong>ENTREZID</strong> -&gt; Identificadores ENTREZID<br />
+</li>
+<li><strong>ENSEMBL</strong> -&gt; Identificadores ENSEMBL</li>
+<li><strong>Pval_Common</strong> -&gt; P valores obtenidos asumiendo
+dispersión común.<br />
+</li>
+<li><strong>adj_Pval_Common</strong> -&gt; P valores ajustados asumiendo
+dispersión común.<br />
+</li>
+<li><strong>Pval_Tagwise</strong> -&gt; P valores asumiendo dispersión
+distinta por gen.<br />
+</li>
+<li><strong>adj_Pval_Tagwise</strong> -&gt; P valores ajustados
+asumiendo dispersión distinta.</li>
+</ul>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Combinamos los datos </span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">rowData</span>(PRJNA821482)[mantener, <span class="fu">c</span>(<span class="st">&quot;ENTREZID&quot;</span>, <span class="st">&quot;ENSEMBL&quot;</span>)],</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">Pval_Common =</span> et.c<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>],</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">adj_Pval_Common =</span> pv_ajust, </span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">Pval_Tagwise =</span> et.t<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>],</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">adj_Pval_Tagwise =</span> pv_ajust_t)  </span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Nos quedamos con los significativos:</span></span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>sign <span class="ot">&lt;-</span> (pv_ajust_t <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">|</span> pv_ajust <span class="sc">&lt;</span> <span class="fl">0.05</span>)  </span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>Dat_inf <span class="ot">&lt;-</span>result[sign,]</span></code></pre></div>
+</div>
+<div id="generación-de-informe" class="section level3">
+<h3>Generación de informe:</h3>
+<p>Tomamos un nivel de significación alfa de 0.05 y mostramos los
+resultados de los genes con expresión diferencial significativa en
+función del oxigeno en un informe:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>final_data <span class="ot">=</span> Dat_inf</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>entrezid <span class="ot">=</span> final_data<span class="sc">$</span>ENTREZID</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>ENTREZID<span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(entrezid), <span class="cn">NA</span>,</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ncbi.nlm.nih.gov/gene/?term=&quot;</span>,</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>                  entrezid,<span class="st">&quot;&#39;&gt;&quot;</span>,entrezid,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">=</span> final_data<span class="sc">$</span>ENSEMBL</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>ENSAMBL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensembl), <span class="cn">NA</span>,</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ensembl.org/Macaca_mulatta&quot;</span>,</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;/Gene/Summary?db=core;g=&quot;</span>,</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>                             ensembl ,<span class="st">&quot;&#39;&gt;&quot;</span>,ensembl,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>info <span class="ot">=</span> <span class="fu">cbind</span>(<span class="at">EntrezID =</span> ENTREZID, <span class="at">Ensembl =</span> ENSAMBL, </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>             final_data[,<span class="dv">3</span><span class="sc">:</span><span class="dv">6</span>],  <span class="at">stringsAsFactors =</span> F )</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>f_out <span class="ot">=</span> <span class="st">&quot;T5_edgeR_clasico.DE&quot;</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>report_dir <span class="ot">=</span> <span class="st">&quot;Reports/&quot;</span></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>titulo <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&quot;PRJNA821482&quot;</span>,<span class="st">&quot; : Analisis de expresion &quot;</span>,</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;diferencial (edgeR clasico).&quot;</span>)</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>report1 <span class="ot">=</span> ReportingTools<span class="sc">::</span><span class="fu">HTMLReport</span>(<span class="at">shortName =</span> f_out, <span class="at">title =</span> titulo,</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">reportDirectory =</span> report_dir)</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="fu">publish</span>(info,report1)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a><span class="fu">finish</span>(report1)</span></code></pre></div>
+<pre><code>## [1] &quot;Reports//T5_edgeR_clasico.DE.html&quot;</code></pre>
+<p> </p>
+</div>
+</div>
+<div id="edger-utilizando-modelo-lineal-generalizado" class="section level2">
+<h2>3.2 edgeR utilizando modelo lineal generalizado</h2>
+<p>En este apartado emplearemos todas las variables fenotípicas de las
+que disponemos para el análisis diferencial.<br />
+En nuestro caso tomaremos <em><strong>Tratamiento</strong></em> que
+presenta dos niveles:</p>
+<ul>
+<li><strong>Hypoxia</strong> -&gt; Crecimiento en ausencia de
+oxígeno.<br />
+</li>
+<li><strong>Normoxia</strong> -&gt; Crecimiento en presencia de
+oxígeno.</li>
+</ul>
+<p>Y <em><strong>TipoCelular</strong></em> que presenta dos niveles:</p>
+<ul>
+<li><strong>HSC</strong> -&gt; Células madre hematopoyéticas.<br />
+</li>
+<li><strong>K562</strong> -&gt; Linfoblastos de paciente con leucemia
+mieloide crónica.</li>
+</ul>
+<p> </p>
+<p>Comprobamos que estas variables están en todas las muestras.</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span>(<span class="fu">is.na</span>(<span class="fu">colData</span>(PRJNA821482)<span class="sc">$</span>TipoCelular))</span></code></pre></div>
+<pre><code>## integer(0)</code></pre>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">which</span>(<span class="fu">is.na</span>(<span class="fu">colData</span>(PRJNA821482)<span class="sc">$</span>Tratamiento))</span></code></pre></div>
+<pre><code>## integer(0)</code></pre>
+<p>Construimos un objeto de tipo DGEList.</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>dge2 <span class="ot">&lt;-</span> edgeR<span class="sc">::</span><span class="fu">DGEList</span>(<span class="at">counts =</span> <span class="fu">assay</span>(PRJNA821482))</span></code></pre></div>
+<div id="eliminación-de-filas-con-conteos-bajos-1" class="section level3">
+<h3>Eliminación de filas con conteos bajos:</h3>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Nos quedamo con la que presnetaban conteos altos del apartado anterior:</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>dge2 <span class="ot">&lt;-</span> dge2[mantener, keep.lib.sizes<span class="ot">=</span><span class="cn">FALSE</span>]</span></code></pre></div>
+</div>
+<div id="matriz-de-diseño" class="section level3">
+<h3>Matriz de diseño:</h3>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tomamos las variables a estudiar.</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>tratamiento <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">colData</span>(PRJNA821482)<span class="sc">$</span>Tratamiento)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>tipo_celular <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">colData</span>(PRJNA821482)<span class="sc">$</span>TipoCelular)</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(tratamiento, tipo_celular)</span></code></pre></div>
+<pre><code>##            tipo_celular
+## tratamiento HSC K562
+##    Hypoxia    3    3
+##    Normoxia   3    3</code></pre>
+<p>Tenemos 3 replicas para cada condición.</p>
+<p>Construimos una variable que recoja la combinación de ambos
+factores.</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Creamos una función que concatene y asigne los nombres:</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>concat <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">t=</span>tratamiento, <span class="at">tc=</span>tipo_celular){ <span class="co">#Numero de fila</span></span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">paste</span>(t[x], tc[x],<span class="at">sep=</span><span class="st">&quot;_&quot;</span>)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>  a</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Creamos la variable factor:</span></span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>fac <span class="ot">=</span> <span class="fu">lapply</span>(<span class="fu">list</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(PRJNA821482)), <span class="at">FUN=</span>concat)</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>tt <span class="ot">=</span> <span class="fu">factor</span>(<span class="fu">unlist</span>(fac))</span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>tt</span></code></pre></div>
+<pre><code>##  [1] Hypoxia_HSC   Hypoxia_HSC   Hypoxia_HSC   Normoxia_HSC  Normoxia_HSC 
+##  [6] Normoxia_HSC  Hypoxia_K562  Hypoxia_K562  Hypoxia_K562  Normoxia_K562
+## [11] Normoxia_K562 Normoxia_K562
+## Levels: Hypoxia_HSC Hypoxia_K562 Normoxia_HSC Normoxia_K562</code></pre>
+<p>Creamos la matriz de diseño</p>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Determinamos la matriz de diseño:  </span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>matriz <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> tt)</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(matriz) <span class="ot">&lt;-</span> <span class="fu">levels</span>(tt)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>matriz</span></code></pre></div>
+<pre><code>##    Hypoxia_HSC Hypoxia_K562 Normoxia_HSC Normoxia_K562
+## 1            1            0            0             0
+## 2            1            0            0             0
+## 3            1            0            0             0
+## 4            0            0            1             0
+## 5            0            0            1             0
+## 6            0            0            1             0
+## 7            0            1            0             0
+## 8            0            1            0             0
+## 9            0            1            0             0
+## 10           0            0            0             1
+## 11           0            0            0             1
+## 12           0            0            0             1
+## attr(,&quot;assign&quot;)
+## [1] 1 1 1 1
+## attr(,&quot;contrasts&quot;)
+## attr(,&quot;contrasts&quot;)$tt
+## [1] &quot;contr.treatment&quot;</code></pre>
+</div>
+<div id="estimación-de-las-dispersiones" class="section level3">
+<h3>Estimación de las dispersiones</h3>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>dge2 <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">estimateDisp</span>(dge2, matriz)</span></code></pre></div>
+<p>Empleando la función <strong>estimateDisp</strong> estimamos las
+dispersiones mediante tres métodos:</p>
+<ul>
+<li><strong>Common dispersion</strong> -&gt; Dispersión común en todos
+los genes.</li>
+</ul>
+<div class="sourceCode" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>dge2<span class="sc">$</span>common.dispersion</span></code></pre></div>
+<pre><code>## [1] 0.004368064</code></pre>
+<ul>
+<li><strong>Tag wise dispersion</strong> -&gt; Dispersión a nivel de
+gen.</li>
+</ul>
+<div class="sourceCode" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dge2<span class="sc">$</span>tagwise.dispersion)</span></code></pre></div>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.002324 0.003895 0.007392 0.039342 0.040962 0.557740</code></pre>
+<ul>
+<li><strong>Trended dispersion</strong> -&gt; Estimación de la
+dispersión a nivel de genes con abundancia similar.</li>
+</ul>
+<div class="sourceCode" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dge2<span class="sc">$</span>trended.dispersion)</span></code></pre></div>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+## 0.003274 0.003980 0.007186 0.034640 0.042633 0.150463</code></pre>
+<p>A partir de los valores de dispersión, podemos calcular el
+coeficiente de la variación biológica (<strong>BGV</strong>) y
+representarlo gráficamente con la función <strong>plotBCV</strong> del
+paquete <strong>edgeR</strong>.</p>
+<div class="sourceCode" id="cb58"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mostramos los resultados</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>edgeR<span class="sc">::</span><span class="fu">plotBCV</span>(dge2)</span></code></pre></div>
+<div class="figure">
+<img src="data:image/png;base64,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" alt="Fig2. Representación del coeficiente de variación biológico (BCV) frente a la abundancia de los genes." width="80%" />
+<p class="caption">
+Fig2. Representación del coeficiente de variación biológico (BCV) frente
+a la abundancia de los genes.
+</p>
+</div>
+</div>
+<div id="ajuste-de-modelos-lineales-generalizados" class="section level3">
+<h3>Ajuste de modelos lineales generalizados</h3>
+<div class="sourceCode" id="cb59"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ajustamos los modelos lineales generalizados:  </span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> edgeR<span class="sc">::</span><span class="fu">glmFit</span>(dge2, <span class="at">design=</span>matriz) </span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Influencia de las variables en los conteos:</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>lrt1 <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(fit, <span class="at">coef=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>)</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(lrt1)</span></code></pre></div>
+<pre><code>## Coefficient:  Hypoxia_HSC Hypoxia_K562 Normoxia_HSC Normoxia_K562 
+##          logFC.Hypoxia_HSC logFC.Hypoxia_K562 logFC.Normoxia_HSC
+## A1CF             -26.03345          -21.46273          -26.03345
+## A3GALT2          -26.03345          -26.03345          -22.44317
+## AACSP1           -26.03345          -18.70163          -26.03345
+## AATK-AS1         -26.03345          -23.29651          -22.16404
+## ABCA8            -26.03345          -18.92218          -26.03345
+## ABCC11           -26.03345          -22.77500          -24.12257
+## ABCG8            -26.03345          -24.09093          -23.32552
+## ABLIM2           -26.03345          -23.28944          -22.14891
+## ACTL8            -26.03345          -15.01399          -23.33051
+## ACTR3BP5         -26.03345          -21.84720          -24.12242
+##          logFC.Normoxia_K562      logCPM        LR PValue FDR
+## A1CF               -22.00979 -1.43875469  3842.891      0   0
+## A3GALT2            -26.03345 -1.87939414  4580.655      0   0
+## AACSP1             -18.50838  0.56173493  6496.307      0   0
+## AATK-AS1           -24.20990 -1.68685038  3169.041      0   0
+## ABCA8              -19.67940  0.01447503  6116.986      0   0
+## ABCC11             -21.80469 -1.55755575  3498.796      0   0
+## ABCG8              -23.42859 -1.82879463  4099.429      0   0
+## ABLIM2             -26.03345 -1.73251065  3675.925      0   0
+## ACTL8              -15.32795  3.78273490 38886.830      0   0
+## ACTR3BP5           -20.75421 -1.16342594  3451.567      0   0</code></pre>
+<p>En el apartado anterior hemos obtenido información acerca de como
+afecta el crecimiento la presencia y ausencia de oxigeno, ahora tenemos
+en cuenta además el tipo celular.</p>
+<p>¿ Qué información nos gustaría obtener?</p>
+<ul>
+<li><strong>C_cel</strong> -&gt; Genes que se expresan diferentemente
+según el tipo celular, nos puede interesar que genes se expresan
+diferencialmente en las células leucémicas (<strong>K562</strong>) con
+respecto a las células madre (<strong>HSC</strong>).<br />
+</li>
+<li><strong>C_HSC</strong> -&gt; Como afecta la hipoxia a la línea
+celular <strong>HSC</strong>.<br />
+</li>
+<li><strong>C_K562</strong> -&gt; Como afecta la hipoxia a la línea
+celular <strong>K562</strong>.<br />
+</li>
+<li><strong>C_total</strong> -&gt; Comparamos que genes se expresan
+diferencialmente en hipoxia en las células <strong>K562</strong>, con
+respecto a las <strong>HSC</strong>.</li>
+</ul>
+<div class="sourceCode" id="cb61"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>contrast <span class="ot">&lt;-</span> limma<span class="sc">::</span><span class="fu">makeContrasts</span>( <span class="at">C_cel =</span> (Normoxia_HSC <span class="sc">+</span> Hypoxia_HSC)</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>                                           <span class="sc">-</span> (Normoxia_K562 <span class="sc">+</span>Hypoxia_K562),</span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">C_HSC =</span> Normoxia_HSC <span class="sc">-</span> Hypoxia_HSC,</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">C_K562 =</span> Normoxia_K562 <span class="sc">-</span> Hypoxia_K562,</span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">C_total =</span> (Normoxia_HSC <span class="sc">-</span> Hypoxia_HSC) </span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>                                        <span class="sc">-</span> (Normoxia_K562 <span class="sc">-</span> Hypoxia_K562),</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">levels =</span> matriz)  </span></code></pre></div>
+<p>Ajustaremos todos los p valores obtenidos a través del método de
+<strong>Benjamini-Hochberg</strong>, y para determinar los genes que
+presentan expresión diferencial tomaremos un <strong>FDR</strong> de
+0.05.<br />
+Partiendo de esto:<br />
+ </p>
+<p><strong>¿Cuántos y que genes presentan expresión diferencial en la
+línea celular </strong> <strong>K562 con respecto a la HSC?</strong></p>
+<div class="sourceCode" id="cb62"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>lrt_cel <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(fit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_cel&quot;</span>]) </span>
+<span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>p_ajust_cel <span class="ot">=</span> <span class="fu">p.adjust</span>(lrt_cel<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_cel<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 10504</code></pre>
+<div class="sourceCode" id="cb64"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(lrt_cel)</span></code></pre></div>
+<pre><code>## Coefficient:  1*Hypoxia_HSC -1*Hypoxia_K562 1*Normoxia_HSC -1*Normoxia_K562 
+##            logFC    logCPM        LR PValue FDR
+## MPO     34.64192 11.524100 15640.780      0   0
+## NR2F2  -30.10632  7.970883  9211.185      0   0
+## RHOXF2 -29.82780  7.835915  8764.951      0   0
+## TPSAB1  29.59060  8.673160  8839.296      0   0
+## TPSB2   29.55461  9.345617 10490.087      0   0
+## S100A6  29.00513  8.382270  8761.126      0   0
+## CD163   28.67236  8.175260  9688.034      0   0
+## IRAK3   28.63541  7.250515  7107.169      0   0
+## ELANE   28.11350  9.260799  9053.143      0   0
+## MAGEA3 -27.90828  6.859076  6864.246      0   0</code></pre>
+<p><strong>¿Cuántos genes presentan expresión diferencial en células HSC
+tras la</strong> <strong>exposición a hipoxia con respecto a
+normoxia?</strong></p>
+<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a>lrt_HSC <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(fit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_HSC&quot;</span>]) </span>
+<span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>p_ajust_HSC <span class="ot">=</span> <span class="fu">p.adjust</span>(lrt_HSC<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_HSC<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 2881</code></pre>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(lrt_HSC)</span></code></pre></div>
+<pre><code>## Coefficient:  -1*Hypoxia_HSC 1*Normoxia_HSC 
+##                  logFC   logCPM        LR        PValue           FDR
+## C6orf223     -5.838604 5.155136 1644.4775  0.000000e+00  0.000000e+00
+## SPP1         -3.912147 7.396073 2041.0094  0.000000e+00  0.000000e+00
+## LOC102724852 -5.519134 5.619279 1414.1262 1.789744e-309 1.115130e-305
+## HS3ST2        4.015866 5.366976 1336.1516 1.574215e-292 7.356307e-289
+## H19          -5.538314 5.317334 1235.5315 1.157177e-270 4.325991e-267
+## EGFL7        -2.692116 8.210582 1111.3159 1.146685e-243 3.572307e-240
+## EGR1         -2.403923 8.796412 1060.4144 1.326600e-232 3.542402e-229
+## PNCK         -8.056010 4.143994  929.4298 3.928700e-204 9.179407e-201
+## DUSP2        -2.861232 5.571127  869.9534 3.339699e-191 6.936183e-188
+## SLC6A19      -2.472895 7.084907  831.5195 7.573695e-183 1.415675e-179</code></pre>
+<p><strong>¿Cuántos genes presentan expresión diferencial en células
+K562 tras la</strong> <strong>exposición a hipoxia con respecto a
+normoxia?</strong></p>
+<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>lrt_K562 <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(fit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_K562&quot;</span>]) </span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>p_ajust_K562 <span class="ot">=</span> <span class="fu">p.adjust</span>(lrt_K562<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_K562<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 1910</code></pre>
+<div class="sourceCode" id="cb72"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(lrt_K562)</span></code></pre></div>
+<pre><code>## Coefficient:  -1*Hypoxia_K562 1*Normoxia_K562 
+##              logFC   logCPM        LR        PValue           FDR
+## PFKFB4   -2.938968 6.757218 1122.8630 3.546412e-246 6.628953e-242
+## SLC4A1   -3.175225 8.420982 1082.1585 2.492655e-237 2.329635e-233
+## ALDOC    -2.836057 6.138936  943.3913 3.625070e-207 2.258660e-203
+## PPFIA4   -6.077036 4.615613  930.4779 2.324977e-204 1.086462e-200
+## MIR210HG -4.279339 4.830864  832.4369 4.784946e-183 1.788804e-179
+## ALAS2    -2.693418 8.109491  821.4172 1.190296e-180 3.708169e-177
+## MSMO1    -2.606896 6.360451  790.4169 6.540690e-174 1.746551e-170
+## PDGFB    -4.487519 4.232336  784.0804 1.560637e-172 3.646428e-169
+## INSIG1   -1.909610 8.506855  701.9948 1.101326e-154 2.287333e-151
+## FAM178B  -2.700801 5.682507  681.5142 3.130677e-150 5.851861e-147</code></pre>
+<p><strong>¿Cuántos y qué genes responden de forma diferente a la
+ausencia de oxigeno</strong> <strong>en las células K562 con respecto a
+las HSC?</strong></p>
+<div class="sourceCode" id="cb74"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>lrt_total <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(fit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_total&quot;</span>]) </span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>p_ajust_total <span class="ot">=</span> <span class="fu">p.adjust</span>(lrt_total<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_total<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 1497</code></pre>
+<div class="sourceCode" id="cb76"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(lrt_total)</span></code></pre></div>
+<pre><code>## Coefficient:  -1*Hypoxia_HSC 1*Hypoxia_K562 1*Normoxia_HSC -1*Normoxia_K562 
+##                  logFC   logCPM       LR        PValue           FDR
+## TXNIP        -2.564499 9.537804 703.9201 4.200166e-155 7.850951e-151
+## SLC4A1        3.080430 8.420982 685.1654 5.030838e-151 4.701821e-147
+## ARRDC4       -3.341276 6.108206 669.8710 1.065755e-147 6.640363e-144
+## SLC5A3        2.288962 8.523071 573.5771 9.358367e-127 4.373165e-123
+## LOC102724852 -4.034499 5.619279 416.3946  1.486667e-92  5.557755e-89
+## AQP1          3.220666 5.195292 414.3592  4.123319e-92  1.284551e-88
+## ACE           3.495891 4.669843 398.0191  1.486430e-88  3.969193e-85
+## H19          -4.085906 5.317334 365.5997  1.699345e-81  3.970520e-78
+## EGR3          4.519236 3.880385 362.3540  8.650068e-81  1.796523e-77
+## SGK1          2.072899 6.759283 360.4271  2.272944e-80  4.248587e-77</code></pre>
+<p> </p>
+<p><strong>C_total</strong> pone de manifiesto las diferencias en cuanto
+a respuesta a hipoxia en las células K562 (leucémicas) con respecto a
+las HSC (células madre), este contraste es el más relevante a nivel
+clínico, por lo que es el que emplearemos en nuestro informe.</p>
+</div>
+<div id="generación-de-informe-1" class="section level3">
+<h3>Generación de informe:</h3>
+<div class="sourceCode" id="cb78"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Combinamos los datos </span></span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>result2 <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">rowData</span>(PRJNA821482)[mantener, <span class="fu">c</span>(<span class="st">&quot;ENTREZID&quot;</span>, <span class="st">&quot;ENSEMBL&quot;</span>)],</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>                lrt_total<span class="sc">$</span>table, <span class="at">adj_Pval=</span> p_ajust_total)  </span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Nos quedamos con los significativos:</span></span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>sign <span class="ot">&lt;-</span> (p_ajust_total <span class="sc">&lt;</span> <span class="fl">0.05</span>)  </span>
+<span id="cb78-7"><a href="#cb78-7" aria-hidden="true" tabindex="-1"></a>Dat_inf2 <span class="ot">&lt;-</span>result2[sign,]</span></code></pre></div>
+<div class="sourceCode" id="cb79"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>final_data <span class="ot">=</span> Dat_inf2</span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>entrezid <span class="ot">=</span> final_data<span class="sc">$</span>ENTREZID</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>ENTREZID<span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(entrezid), <span class="cn">NA</span>,</span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ncbi.nlm.nih.gov/gene/?term=&quot;</span>,</span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>                  entrezid,<span class="st">&quot;&#39;&gt;&quot;</span>,entrezid,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span>
+<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">=</span> final_data<span class="sc">$</span>ENSEMBL</span>
+<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a>ENSAMBL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensembl), <span class="cn">NA</span>,</span>
+<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ensembl.org/Macaca_mulatta&quot;</span>,</span>
+<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;/Gene/Summary?db=core;g=&quot;</span>,</span>
+<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a>                             ensembl ,<span class="st">&quot;&#39;&gt;&quot;</span>,ensembl,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb80"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>info <span class="ot">=</span> <span class="fu">cbind</span>(<span class="at">EntrezID =</span> ENTREZID, <span class="at">Ensembl =</span> ENSAMBL, </span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>             final_data[,<span class="dv">3</span><span class="sc">:</span><span class="dv">7</span>],  <span class="at">stringsAsFactors =</span> F )</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>f_out <span class="ot">=</span> <span class="st">&quot;T5_edgeR_contraste.DE&quot;</span></span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>report_dir <span class="ot">=</span> <span class="st">&quot;Reports/&quot;</span></span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>titulo <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&quot;PRJNA821482&quot;</span>,<span class="st">&quot; : Analisis de expresion diferencial&quot;</span>,</span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot; en hipoxia en ambas lineas celulares.&quot;</span>)</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>report2 <span class="ot">=</span> ReportingTools<span class="sc">::</span><span class="fu">HTMLReport</span>(<span class="at">shortName =</span> f_out, <span class="at">title =</span> titulo,</span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">reportDirectory =</span> report_dir)</span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a><span class="fu">publish</span>(info,report2)</span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a><span class="fu">finish</span>(report2)</span></code></pre></div>
+<pre><code>## [1] &quot;Reports//T5_edgeR_contraste.DE.html&quot;</code></pre>
+</div>
+</div>
+<div id="edger-utilizando-cuasi-verosimilitud" class="section level2">
+<h2>3.3 edgeR utilizando cuasi-verosimilitud</h2>
+<p>En este apartado ajustamos los modelos lineales por
+cuasiverosimilitud.<br />
+Tomamos el objeto del apartado anterior.</p>
+<div class="sourceCode" id="cb82"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ajustamos los modelos lineales por cuasiverosimilitud.:  </span></span>
+<span id="cb82-2"><a href="#cb82-2" aria-hidden="true" tabindex="-1"></a>qlfit <span class="ot">&lt;-</span> edgeR<span class="sc">::</span><span class="fu">glmQLFit</span>(dge2, <span class="at">design=</span>matriz)  </span>
+<span id="cb82-3"><a href="#cb82-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb82-4"><a href="#cb82-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Influencia de las variables en los conteos:</span></span>
+<span id="cb82-5"><a href="#cb82-5" aria-hidden="true" tabindex="-1"></a>Ftest1 <span class="ot">&lt;-</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(qlfit, <span class="at">coef=</span><span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>)</span>
+<span id="cb82-6"><a href="#cb82-6" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(Ftest1)</span></code></pre></div>
+<pre><code>## Coefficient:  Hypoxia_HSC Hypoxia_K562 Normoxia_HSC Normoxia_K562 
+##          logFC.Hypoxia_HSC logFC.Hypoxia_K562 logFC.Normoxia_HSC
+## A1CF             -26.03345          -21.46231          -26.03345
+## A3GALT2          -26.03345          -26.03345          -22.44317
+## AACSP1           -26.03345          -18.70195          -26.03345
+## AATK-AS1         -26.03345          -23.29419          -22.16030
+## ABCA8            -26.03345          -18.92195          -26.03345
+## ABCC11           -26.03345          -22.77462          -24.12201
+## ABCG8            -26.03345          -24.09074          -23.32576
+## ABLIM2           -26.03345          -23.28995          -22.14916
+## ACTL8            -26.03345          -15.01399          -23.33052
+## ACTR3BP5         -26.03345          -21.84679          -24.12227
+##          logFC.Normoxia_K562      logCPM        LR PValue FDR
+## A1CF               -22.01050 -1.43875469  4503.076      0   0
+## A3GALT2            -26.03345 -1.87939414  4580.655      0   0
+## AACSP1             -18.50914  0.56173493  8109.483      0   0
+## AATK-AS1           -24.21072 -1.68685038  4493.832      0   0
+## ABCA8              -19.67978  0.01447503  5335.988      0   0
+## ABCC11             -21.80424 -1.55755575  4119.631      0   0
+## ABCG8              -23.42880 -1.82879463  4328.917      0   0
+## ABLIM2             -26.03345 -1.73251065  4200.732      0   0
+## ACTL8              -15.32780  3.78273490 33382.868      0   0
+## ACTR3BP5           -20.75448 -1.16342594  4458.545      0   0</code></pre>
+<p>Ajustaremos todos los p valores obtenidos a través del método de
+<strong>Benjamini-Hochberg</strong>, y para determinar los genes que
+presentan expresión diferencial tomaremos un <strong>FDR</strong> de
+0.05.<br />
+Partiendo de esto, y empleando el método de cuasiverosimilitud, nos
+planteamos:<br />
+ </p>
+<p><strong>¿Cuántos y que genes presentan expresión diferencial en la
+línea celular </strong> <strong>K562 con respecto a la HSC?</strong></p>
+<div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb84-1"><a href="#cb84-1" aria-hidden="true" tabindex="-1"></a>ql_lrt_cel <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(qlfit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_cel&quot;</span>]) </span>
+<span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>p_ajust_cel <span class="ot">=</span> <span class="fu">p.adjust</span>(ql_lrt_cel<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_cel<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 10513</code></pre>
+<div class="sourceCode" id="cb86"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb86-1"><a href="#cb86-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb86-2"><a href="#cb86-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(ql_lrt_cel)</span></code></pre></div>
+<pre><code>## Coefficient:  1*Hypoxia_HSC -1*Hypoxia_K562 1*Normoxia_HSC -1*Normoxia_K562 
+##            logFC    logCPM        LR PValue FDR
+## MPO     34.64194 11.524100 14670.840      0   0
+## NR2F2  -30.10631  7.970883  8419.880      0   0
+## RHOXF2 -29.82779  7.835915  8139.712      0   0
+## TPSAB1  29.59066  8.673160  9722.321      0   0
+## TPSB2   29.55462  9.345617 10819.213      0   0
+## S100A6  29.00516  8.382270  9186.985      0   0
+## CD163   28.67235  8.175260  8754.701      0   0
+## IRAK3   28.63541  7.250515  6925.505      0   0
+## ELANE   28.11354  9.260799 10686.340      0   0
+## MAGEA3 -27.90829  6.859076  6149.851      0   0</code></pre>
+<p><strong>¿Cuántos genes presentan expresión diferencial en células HSC
+tras la</strong> <strong>exposición a hipoxia con respecto a
+normoxia?</strong></p>
+<div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" aria-hidden="true" tabindex="-1"></a>ql_lrt_HSC <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(qlfit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_HSC&quot;</span>]) </span>
+<span id="cb88-2"><a href="#cb88-2" aria-hidden="true" tabindex="-1"></a>p_ajust_HSC <span class="ot">=</span> <span class="fu">p.adjust</span>(ql_lrt_HSC<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb88-3"><a href="#cb88-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_HSC<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 2876</code></pre>
+<div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="#cb90-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb90-2"><a href="#cb90-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(ql_lrt_HSC)</span></code></pre></div>
+<pre><code>## Coefficient:  -1*Hypoxia_HSC 1*Normoxia_HSC 
+##                  logFC   logCPM        LR        PValue           FDR
+## C6orf223     -5.838518 5.155136 1595.6320  0.000000e+00  0.000000e+00
+## SPP1         -3.912133 7.396073 2148.1689  0.000000e+00  0.000000e+00
+## LOC102724852 -5.519241 5.619279 1442.5378 1.199401e-315 7.473069e-312
+## HS3ST2        4.015994 5.366976 1276.2878 1.607909e-279 7.513759e-276
+## H19          -5.538338 5.317334 1252.6518 2.201853e-274 8.231407e-271
+## EGFL7        -2.692112 8.210582 1109.2568 3.213440e-243 1.001094e-239
+## EGR1         -2.403910 8.796412  961.5552 4.082632e-211 1.090179e-207
+## PNCK         -8.055822 4.143994  881.7819 8.959061e-194 2.093285e-190
+## VCAN         -2.269843 6.987297  861.2093 2.658658e-189 5.521738e-186
+## DUSP2        -2.861152 5.571127  843.8475 1.581736e-185 2.956581e-182</code></pre>
+<p><strong>¿Cuántos genes presentan expresión diferencial en células
+K563 tras la</strong> <strong>exposición a hipoxia con respecto a
+normoxia?</strong></p>
+<div class="sourceCode" id="cb92"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb92-1"><a href="#cb92-1" aria-hidden="true" tabindex="-1"></a>ql_lrt_K562 <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(qlfit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_K562&quot;</span>]) </span>
+<span id="cb92-2"><a href="#cb92-2" aria-hidden="true" tabindex="-1"></a>p_ajust_K562 <span class="ot">=</span> <span class="fu">p.adjust</span>(ql_lrt_K562<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb92-3"><a href="#cb92-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_K562<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 1877</code></pre>
+<div class="sourceCode" id="cb94"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb94-1"><a href="#cb94-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb94-2"><a href="#cb94-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(ql_lrt_K562)</span></code></pre></div>
+<pre><code>## Coefficient:  -1*Hypoxia_K562 1*Normoxia_K562 
+##              logFC   logCPM        LR        PValue           FDR
+## PFKFB4   -2.938787 6.757218 1008.3702 2.722064e-221 5.088083e-217
+## PPFIA4   -6.077036 4.615613  980.0864 3.826512e-215 3.576258e-211
+## SLC4A1   -3.175171 8.420982  957.7035 2.806761e-210 1.748799e-206
+## ALDOC    -2.836274 6.138936  864.9598 4.067391e-190 1.900692e-186
+## MIR210HG -4.279408 4.830864  789.5125 1.028590e-173 3.845280e-170
+## PDGFB    -4.487517 4.232336  786.8277 3.944423e-173 1.228819e-169
+## MSMO1    -2.606877 6.360451  757.9780 7.391151e-167 1.973649e-163
+## FAM178B  -2.701123 5.682507  739.6071 7.298132e-163 1.705208e-159
+## ALAS2    -2.693476 8.109491  735.7145 5.124051e-162 1.064208e-158
+## INSIG1   -1.909618 8.506855  615.7828 6.180068e-136 1.155178e-132</code></pre>
+<p><strong>¿Cuántos y qué genes responden de forma diferente a la
+ausencia de oxigeno</strong> <strong>en las células K562 con respecto a
+las HSC?</strong></p>
+<div class="sourceCode" id="cb96"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb96-1"><a href="#cb96-1" aria-hidden="true" tabindex="-1"></a>ql_lrt_total <span class="ot">=</span> edgeR<span class="sc">::</span><span class="fu">glmLRT</span>(qlfit, <span class="at">contrast =</span> contrast[,<span class="st">&quot;C_total&quot;</span>]) </span>
+<span id="cb96-2"><a href="#cb96-2" aria-hidden="true" tabindex="-1"></a>p_ajust_total <span class="ot">=</span> <span class="fu">p.adjust</span>(ql_lrt_total<span class="sc">$</span>table[,<span class="st">&quot;PValue&quot;</span>])</span>
+<span id="cb96-3"><a href="#cb96-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(p_ajust_total<span class="sc">&lt;</span> <span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## [1] 1518</code></pre>
+<div class="sourceCode" id="cb98"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Los más significativos son:</span></span>
+<span id="cb98-2"><a href="#cb98-2" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(ql_lrt_total)</span></code></pre></div>
+<pre><code>## Coefficient:  -1*Hypoxia_HSC 1*Hypoxia_K562 1*Normoxia_HSC -1*Normoxia_K562 
+##                  logFC   logCPM       LR        PValue           FDR
+## ARRDC4       -3.341459 6.108206 597.1763 6.886353e-132 1.287197e-127
+## SLC4A1        3.080420 8.420982 592.6801 6.545748e-131 6.117656e-127
+## TXNIP        -2.564485 9.537804 579.0868 5.925582e-128 3.692033e-124
+## SLC5A3        2.288868 8.523071 476.1978 1.435857e-105 6.709761e-102
+## LOC102724852 -4.034586 5.619279 422.8783  5.767183e-94  2.156004e-90
+## H19          -4.085899 5.317334 369.4482  2.467993e-82  7.688622e-79
+## AQP1          3.220625 5.195292 364.7770  2.566992e-81  6.854603e-78
+## ACE           3.496805 4.669843 349.6118  5.148483e-78  1.202943e-74
+## EGR3          4.519335 3.880385 348.5561  8.741154e-78  1.815441e-74
+## IL8           2.380306 5.994443 342.5661  1.762063e-76  3.293649e-73</code></pre>
+<p> </p>
+<p>Nuevamente nos centramos en el contraste <strong>C_total</strong>
+para generar el informe.</p>
+<div id="generación-de-informe-2" class="section level3">
+<h3>Generación de informe:</h3>
+<div class="sourceCode" id="cb100"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Combinamos los datos </span></span>
+<span id="cb100-2"><a href="#cb100-2" aria-hidden="true" tabindex="-1"></a>result3 <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">rowData</span>(PRJNA821482)[mantener, <span class="fu">c</span>(<span class="st">&quot;ENTREZID&quot;</span>, <span class="st">&quot;ENSEMBL&quot;</span>)],</span>
+<span id="cb100-3"><a href="#cb100-3" aria-hidden="true" tabindex="-1"></a>                lrt_total<span class="sc">$</span>table, <span class="at">adj_Pval=</span> p_ajust_total)  </span>
+<span id="cb100-4"><a href="#cb100-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb100-5"><a href="#cb100-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Nos quedamos con los significativos:</span></span>
+<span id="cb100-6"><a href="#cb100-6" aria-hidden="true" tabindex="-1"></a>sign <span class="ot">&lt;-</span> (p_ajust_total <span class="sc">&lt;</span> <span class="fl">0.05</span>)  </span>
+<span id="cb100-7"><a href="#cb100-7" aria-hidden="true" tabindex="-1"></a>Dat_inf3 <span class="ot">&lt;-</span>result2[sign,]</span></code></pre></div>
+<div class="sourceCode" id="cb101"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb101-1"><a href="#cb101-1" aria-hidden="true" tabindex="-1"></a>final_data <span class="ot">=</span> Dat_inf3</span>
+<span id="cb101-2"><a href="#cb101-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-3"><a href="#cb101-3" aria-hidden="true" tabindex="-1"></a>entrezid <span class="ot">=</span> final_data<span class="sc">$</span>ENTREZID</span>
+<span id="cb101-4"><a href="#cb101-4" aria-hidden="true" tabindex="-1"></a>ENTREZID<span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(entrezid), <span class="cn">NA</span>,</span>
+<span id="cb101-5"><a href="#cb101-5" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ncbi.nlm.nih.gov/gene/?term=&quot;</span>,</span>
+<span id="cb101-6"><a href="#cb101-6" aria-hidden="true" tabindex="-1"></a>                  entrezid,<span class="st">&quot;&#39;&gt;&quot;</span>,entrezid,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span>
+<span id="cb101-7"><a href="#cb101-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-8"><a href="#cb101-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb101-9"><a href="#cb101-9" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">=</span> final_data<span class="sc">$</span>ENSEMBL</span>
+<span id="cb101-10"><a href="#cb101-10" aria-hidden="true" tabindex="-1"></a>ENSAMBL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensembl), <span class="cn">NA</span>,</span>
+<span id="cb101-11"><a href="#cb101-11" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ensembl.org/Macaca_mulatta&quot;</span>,</span>
+<span id="cb101-12"><a href="#cb101-12" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;/Gene/Summary?db=core;g=&quot;</span>,</span>
+<span id="cb101-13"><a href="#cb101-13" aria-hidden="true" tabindex="-1"></a>                             ensembl ,<span class="st">&quot;&#39;&gt;&quot;</span>,ensembl,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb102"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>info <span class="ot">=</span> <span class="fu">cbind</span>(<span class="at">EntrezID =</span> ENTREZID, <span class="at">Ensembl =</span> ENSAMBL, </span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>             final_data[,<span class="dv">3</span><span class="sc">:</span><span class="dv">7</span>],  <span class="at">stringsAsFactors =</span> F )</span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-4"><a href="#cb102-4" aria-hidden="true" tabindex="-1"></a>f_out <span class="ot">=</span> <span class="st">&quot;T5_edgeR_cuasiverosimilitud.DE&quot;</span></span>
+<span id="cb102-5"><a href="#cb102-5" aria-hidden="true" tabindex="-1"></a>report_dir <span class="ot">=</span> <span class="st">&quot;Reports/&quot;</span></span>
+<span id="cb102-6"><a href="#cb102-6" aria-hidden="true" tabindex="-1"></a>titulo <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&quot;PRJNA821482&quot;</span>,<span class="st">&quot; : Analisis de expresion diferencial en hipoxia&quot;</span>,</span>
+<span id="cb102-7"><a href="#cb102-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot; en ambas lineas celulares mediante cuasiverosimilitud.&quot;</span>)</span>
+<span id="cb102-8"><a href="#cb102-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb102-9"><a href="#cb102-9" aria-hidden="true" tabindex="-1"></a>report3 <span class="ot">=</span> ReportingTools<span class="sc">::</span><span class="fu">HTMLReport</span>(<span class="at">shortName =</span> f_out, <span class="at">title =</span> titulo,</span>
+<span id="cb102-10"><a href="#cb102-10" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">reportDirectory =</span> report_dir)</span>
+<span id="cb102-11"><a href="#cb102-11" aria-hidden="true" tabindex="-1"></a><span class="fu">publish</span>(info,report3)</span>
+<span id="cb102-12"><a href="#cb102-12" aria-hidden="true" tabindex="-1"></a><span class="fu">finish</span>(report3)</span></code></pre></div>
+<pre><code>## [1] &quot;Reports//T5_edgeR_cuasiverosimilitud.DE.html&quot;</code></pre>
+</div>
+</div>
+<div id="deseq2" class="section level2">
+<h2>3.4 DESeq2</h2>
+<p>En este último apartado emplearemos <strong>DESeq2</strong> para
+llevar a cabo el análisis de expresión diferencial.</p>
+<p>Empezamos generando un objeto de la clase
+<strong>DESeqDataSet</strong> a partir de nuestro
+<strong>RangedSummarizedExperiment</strong>.<br />
+Usaremos como matriz de diseño la misma que en los apartados
+<strong>3.2</strong> y <strong>3.3</strong>, que tenía esta
+estructura:</p>
+<div class="sourceCode" id="cb104"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a>matriz</span></code></pre></div>
+<pre><code>##    Hypoxia_HSC Hypoxia_K562 Normoxia_HSC Normoxia_K562
+## 1            1            0            0             0
+## 2            1            0            0             0
+## 3            1            0            0             0
+## 4            0            0            1             0
+## 5            0            0            1             0
+## 6            0            0            1             0
+## 7            0            1            0             0
+## 8            0            1            0             0
+## 9            0            1            0             0
+## 10           0            0            0             1
+## 11           0            0            0             1
+## 12           0            0            0             1
+## attr(,&quot;assign&quot;)
+## [1] 1 1 1 1
+## attr(,&quot;contrasts&quot;)
+## attr(,&quot;contrasts&quot;)$tt
+## [1] &quot;contr.treatment&quot;</code></pre>
+<div class="sourceCode" id="cb106"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb106-1"><a href="#cb106-1" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> DESeq2<span class="sc">::</span><span class="fu">DESeqDataSet</span>(PRJNA821482, <span class="at">design =</span> (matriz))</span>
+<span id="cb106-2"><a href="#cb106-2" aria-hidden="true" tabindex="-1"></a>dds</span></code></pre></div>
+<pre><code>## class: DESeqDataSet 
+## dim: 25189 12 
+## metadata(9): name organism ... url version
+## assays(1): counts
+## rownames(25189): A1BG A1BG-AS1 ... ZZEF1 ZZZ3
+## rowData names(3): ALIAS ENTREZID ENSEMBL
+## colnames(12): SRR18537220 SRR18537221 ... SRR18537230 SRR18537231
+## colData names(5): Run Muestra TipoCelular Tratamiento BioProject</code></pre>
+<p>Eliminamos los conteos bajos al igual que en las actividades
+anteriores.</p>
+<div class="sourceCode" id="cb108"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb108-1"><a href="#cb108-1" aria-hidden="true" tabindex="-1"></a>mantener <span class="ot">&lt;-</span> <span class="fu">rowSums</span>(<span class="fu">counts</span>(dds) <span class="sc">&gt;</span> <span class="dv">0</span>,<span class="dv">5</span>) <span class="sc">&gt;</span> <span class="dv">2</span></span>
+<span id="cb108-2"><a href="#cb108-2" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">=</span> dds[mantener,]</span></code></pre></div>
+<p>Hacemos el estudio de expresión diferencial.</p>
+<div class="sourceCode" id="cb109"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb109-1"><a href="#cb109-1" aria-hidden="true" tabindex="-1"></a>dds <span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dds)</span></code></pre></div>
+<pre><code>## using supplied model matrix</code></pre>
+<pre><code>## estimating size factors</code></pre>
+<pre><code>## estimating dispersions</code></pre>
+<pre><code>## gene-wise dispersion estimates</code></pre>
+<pre><code>## mean-dispersion relationship</code></pre>
+<pre><code>## final dispersion estimates</code></pre>
+<pre><code>## fitting model and testing</code></pre>
+<p>¿Qué niveles tenemos?</p>
+<div class="sourceCode" id="cb117"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a><span class="fu">resultsNames</span>(dds)</span></code></pre></div>
+<pre><code>## [1] &quot;Hypoxia_HSC&quot;   &quot;Hypoxia_K562&quot;  &quot;Normoxia_HSC&quot;  &quot;Normoxia_K562&quot;</code></pre>
+<p>Mostramos los resultados del contraste entre el efecto de la hipoxia
+en células <strong>HSC</strong> y el efecto de la hipoxia sobre las
+células <strong>K562</strong> fijando un alfa de 0.05 y ajustando los p
+valores por el método de <strong>Benjamini-Hochberg</strong>.</p>
+<div class="sourceCode" id="cb119"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Contraste:</span></span>
+<span id="cb119-2"><a href="#cb119-2" aria-hidden="true" tabindex="-1"></a>C_total <span class="ot">&lt;-</span> limma<span class="sc">::</span><span class="fu">makeContrasts</span>( ((Normoxia_HSC <span class="sc">-</span> Hypoxia_HSC) </span>
+<span id="cb119-3"><a href="#cb119-3" aria-hidden="true" tabindex="-1"></a>                                  <span class="sc">-</span> (Normoxia_K562 <span class="sc">-</span> Hypoxia_K562)),</span>
+<span id="cb119-4"><a href="#cb119-4" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">levels =</span> matriz)  </span>
+<span id="cb119-5"><a href="#cb119-5" aria-hidden="true" tabindex="-1"></a>res_dds <span class="ot">=</span> <span class="fu">results</span>(dds, <span class="at">contrast =</span> C_total,</span>
+<span id="cb119-6"><a href="#cb119-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">alpha =</span> <span class="fl">0.05</span>,  <span class="at">pAdjustMethod =</span> <span class="st">&quot;BH&quot;</span>)</span>
+<span id="cb119-7"><a href="#cb119-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb119-8"><a href="#cb119-8" aria-hidden="true" tabindex="-1"></a>res_dds</span></code></pre></div>
+<pre><code>## log2 fold change (MLE): -1,+1,+1,-1 
+## Wald test p-value: -1,+1,+1,-1 
+## DataFrame with 18692 rows and 6 columns
+##           baseMean log2FoldChange     lfcSE      stat      pvalue        padj
+##          &lt;numeric&gt;      &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;   &lt;numeric&gt;   &lt;numeric&gt;
+## A1BG     73.269480     -0.0867318  0.347047 -0.249914   0.8026542    0.892196
+## A1BG-AS1 12.674568     -0.1471912  0.703185 -0.209321   0.8341977    0.911166
+## A1CF      1.151099      0.6626202  2.779532  0.238393   0.8115765          NA
+## A2M      51.019286      2.8761009  1.698323  1.693495   0.0903613    0.204516
+## A2M-AS1   0.964861      1.0403443  3.052770  0.340787   0.7332639          NA
+## ...            ...            ...       ...       ...         ...         ...
+## ZYG11A     138.036      2.1398594  1.330197  1.608679 1.07687e-01 2.32224e-01
+## ZYG11B     534.711      0.1450560  0.132671  1.093353 2.74239e-01 4.51411e-01
+## ZYX       1199.620      1.2665032  0.116038 10.914544 9.82208e-28 1.87576e-25
+## ZZEF1      971.340      0.7419865  0.117166  6.332785 2.40775e-10 6.64278e-09
+## ZZZ3       481.195      0.0220788  0.135901  0.162463 8.70941e-01 9.32704e-01</code></pre>
+<div class="sourceCode" id="cb121"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb121-1"><a href="#cb121-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(res_dds<span class="sc">$</span>padj<span class="sc">&lt;</span><span class="fl">0.05</span>)</span></code></pre></div>
+<pre><code>## 
+## FALSE  TRUE 
+## 10407  4298</code></pre>
+<p>Según este análisis encontramos expresión diferencial en 4298
+genes.</p>
+<div id="generación-de-informe-3" class="section level3">
+<h3>Generación de informe:</h3>
+<div class="sourceCode" id="cb123"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb123-1"><a href="#cb123-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Combinamos los datos </span></span>
+<span id="cb123-2"><a href="#cb123-2" aria-hidden="true" tabindex="-1"></a>result4 <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">rowData</span>(PRJNA821482)[mantener, <span class="fu">c</span>(<span class="st">&quot;ENTREZID&quot;</span>, <span class="st">&quot;ENSEMBL&quot;</span>)],</span>
+<span id="cb123-3"><a href="#cb123-3" aria-hidden="true" tabindex="-1"></a>                res_dds)  </span>
+<span id="cb123-4"><a href="#cb123-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb123-5"><a href="#cb123-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Nos quedamos con los significativos:</span></span>
+<span id="cb123-6"><a href="#cb123-6" aria-hidden="true" tabindex="-1"></a>sign <span class="ot">&lt;-</span> (p_ajust_total <span class="sc">&lt;</span> <span class="fl">0.05</span>)  </span>
+<span id="cb123-7"><a href="#cb123-7" aria-hidden="true" tabindex="-1"></a>Dat_inf4 <span class="ot">&lt;-</span>result2[sign,]</span></code></pre></div>
+<div class="sourceCode" id="cb124"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a>final_data <span class="ot">=</span> Dat_inf4</span>
+<span id="cb124-2"><a href="#cb124-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb124-3"><a href="#cb124-3" aria-hidden="true" tabindex="-1"></a>entrezid <span class="ot">=</span> final_data<span class="sc">$</span>ENTREZID</span>
+<span id="cb124-4"><a href="#cb124-4" aria-hidden="true" tabindex="-1"></a>ENTREZID<span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(entrezid), <span class="cn">NA</span>,</span>
+<span id="cb124-5"><a href="#cb124-5" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ncbi.nlm.nih.gov/gene/?term=&quot;</span>,</span>
+<span id="cb124-6"><a href="#cb124-6" aria-hidden="true" tabindex="-1"></a>                  entrezid,<span class="st">&quot;&#39;&gt;&quot;</span>,entrezid,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span>
+<span id="cb124-7"><a href="#cb124-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb124-8"><a href="#cb124-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb124-9"><a href="#cb124-9" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">=</span> final_data<span class="sc">$</span>ENSEMBL</span>
+<span id="cb124-10"><a href="#cb124-10" aria-hidden="true" tabindex="-1"></a>ENSAMBL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensembl), <span class="cn">NA</span>,</span>
+<span id="cb124-11"><a href="#cb124-11" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">&quot;&lt;a href=&#39;http://www.ensembl.org/Macaca_mulatta&quot;</span>,</span>
+<span id="cb124-12"><a href="#cb124-12" aria-hidden="true" tabindex="-1"></a>                             <span class="st">&quot;/Gene/Summary?db=core;g=&quot;</span>,</span>
+<span id="cb124-13"><a href="#cb124-13" aria-hidden="true" tabindex="-1"></a>                             ensembl ,<span class="st">&quot;&#39;&gt;&quot;</span>,ensembl,<span class="st">&quot;&lt;/a&gt;&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb125"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb125-1"><a href="#cb125-1" aria-hidden="true" tabindex="-1"></a>info <span class="ot">=</span> <span class="fu">cbind</span>(<span class="at">EntrezID =</span> ENTREZID, <span class="at">Ensembl =</span> ENSAMBL, </span>
+<span id="cb125-2"><a href="#cb125-2" aria-hidden="true" tabindex="-1"></a>             final_data[,<span class="dv">3</span><span class="sc">:</span><span class="dv">7</span>],  <span class="at">stringsAsFactors =</span> F )</span>
+<span id="cb125-3"><a href="#cb125-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb125-4"><a href="#cb125-4" aria-hidden="true" tabindex="-1"></a>f_out <span class="ot">=</span> <span class="st">&quot;T5_DESeq2.DE&quot;</span></span>
+<span id="cb125-5"><a href="#cb125-5" aria-hidden="true" tabindex="-1"></a>report_dir <span class="ot">=</span> <span class="st">&quot;Reports/&quot;</span></span>
+<span id="cb125-6"><a href="#cb125-6" aria-hidden="true" tabindex="-1"></a>titulo <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">&quot;PRJNA821482&quot;</span>,<span class="st">&quot; : Analisis de expresion diferencial en hipoxia&quot;</span>,</span>
+<span id="cb125-7"><a href="#cb125-7" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot; en ambas lineas celulares mediante cuasiverosimilitud.&quot;</span>)</span>
+<span id="cb125-8"><a href="#cb125-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb125-9"><a href="#cb125-9" aria-hidden="true" tabindex="-1"></a>report4 <span class="ot">=</span> ReportingTools<span class="sc">::</span><span class="fu">HTMLReport</span>(<span class="at">shortName =</span> f_out, <span class="at">title =</span> titulo,</span>
+<span id="cb125-10"><a href="#cb125-10" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">reportDirectory =</span> report_dir)</span>
+<span id="cb125-11"><a href="#cb125-11" aria-hidden="true" tabindex="-1"></a><span class="fu">publish</span>(info,report4)</span>
+<span id="cb125-12"><a href="#cb125-12" aria-hidden="true" tabindex="-1"></a><span class="fu">finish</span>(report4)</span></code></pre></div>
+<pre><code>## [1] &quot;Reports//T5_DESeq2.DE.html&quot;</code></pre>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

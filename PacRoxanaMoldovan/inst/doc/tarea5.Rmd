@@ -1,0 +1,801 @@
+---
+title: "Tarea 5. Expresión diferencial con datos RNA-Seq"
+author: "Roxana Andreea Moldovan Moldovan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tarea5}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---   
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+doAll = TRUE
+dir_datos = "../data/"
+centrado="center"
+```   
+
+***  
+
+# 1. Introducción  
+
+En esta tarea llevaremos a cabo un análisis de la expresión diferencial
+a partir de los datos de la **Tarea 3** 
+[PRJNA821482](https://www.ncbi.nlm.nih.gov/bioproject/821482).  
+
+En este estudio se analiza el patrón de expresión génica mediante RNA-seq
+de 12 muestras correspondientes a la exposición a **Normoxia** e **Hipoxia**
+de dos líneas celulares (**HSC** y  **K562**) por triplicado.  
+
+&nbsp;  
+
+***  
+
+# 2. Carga de datos
+
+## Paquetes empleados:  
+
+```{R, Paquetes, eval=doAll, warning=FALSE}
+pacman::p_load(edgeR,SummarizedExperiment, ggplot2, pbapply, limma, 
+               DESeq2, ReportingTools)
+```
+
+## Carga de datos del experimento.
+
+```{R, Datos1, eval=doAll, warning=FALSE}
+datos="PRJNA821482.rda"
+load(paste(dir_datos, datos, sep=""))
+```
+  
+&nbsp;  
+
+***
+  
+# 3. Analisis de expresión diferencial.  
+
+## 3.1 edgeR clásico
+
+```{R, pData, eval=doAll, warning=FALSE}
+# Datos fenotípicos de la primera muestra:
+colData(PRJNA821482) 
+```   
+  
+Como hemos indicado anteriormente tenemos datos relativos de expresión bajo
+dos condiciones experimentales y dos líneas celulares distintas.   
+Para este primer análisis nos centraremos en el efecto se la ausencia de oxígeno 
+sobre la expresión, para ello tomaremos la variable fenotípica 
+_**Tratamiento**_ que presenta dos niveles:  
+
+  * **Hypoxia** -> Crecimiento en ausencia de oxígeno.   
+  * **Normoxia** -> Crecimiento en presencia de oxígeno.      
+  
+### Estudio de los datos:  
+
+Construimos un objeto de tipo **DGEList**
+
+```{R, edgeR_DGEList, eval=doAll, warning=FALSE}
+dge <- edgeR::DGEList(counts = assay(PRJNA821482), 
+               group = colData(PRJNA821482)$Tratamiento)
+```   
+
+Describimos el tamaños de las librerías:   
+
+```{R, edgeR_summary, eval=doAll, warning=FALSE}
+summary(dge$samples[,"lib.size"])
+```  
+
+¿Qué porcentaje de genes no presentan anotación? 
+
+```{R, edgeR_porcent, eval=doAll, warning=FALSE}
+total = nrow(rowData(PRJNA821482))
+# funcion que calcula el procentaje de genes no anotados:
+porcent <- function(x, t){
+  s = sum(is.na(x))
+  paste0( s/t *100, "%")
+}
+
+paste0("Encontramos ", total, " genes, de estos no presentan anotación:")
+s <- sapply(rowData(PRJNA821482), porcent, total)  
+s
+```   
+
+El 9,2% de los genes no están atontados según ENSEMBL.   
+
+### Eliminación de filas con conteos bajos:  
+
+Debemos tener en cuenta que en algunos casos señales pequeñas pueden deberse 
+al ruido y no a la verdadera expresión del gen.    
+Por otro lado, incluso si de expresiones bajas se tratase, estas no nos ofrecen 
+mucha información y no es fiable desde el punto de vista estadístico.  
+Con el fin de solventarlo:   
+  * Determinamos los conteos por millón de cada gen para cada una
+    de las muestras usando la función **cpm**.  
+  * Tomamos las que presentan un conteo mayor de 0,5.
+  * Si tenemos en más de dos muestras conteos de más de 0,5 determinamos que
+    el gen se expresa.   
+
+```{R, edgeR_cont, eval=doAll, warning=FALSE}
+# Conteos por millon:  
+c <- cpm(PRJNA821482)
+mantener <- rowSums(c > 0,5) > 2
+table(mantener)
+```   
+
+Observamos que 6497 presentan expresiones muy bajas. Los eliminamos y
+recalculamos el tamaño de las librerías:
+
+```{R, edgeR_descart, eval=doAll, warning=FALSE}
+
+dge <- dge[mantener, keep.lib.sizes=FALSE]
+```  
+
+Describimos el tamaños de las librerías nuevamente:   
+
+```{R, edgeR_summary2, eval=doAll, warning=FALSE}
+summary(dge$samples[,"lib.size"])
+``` 
+
+Lo representamos:  
+
+```{R, edgeR_plot, eval=doAll, warning=FALSE, out.width = "80%", fig.asp = 0.8, fig.width = 8, fig.cap= "Fig1. Representación del tamaño de las librerias por muestra."}
+ggplot2::ggplot(dge$samples, aes(y= lib.size, x =row.names(dge$samples),
+                                 fill=lib.size)) + 
+                geom_col() + coord_flip() + theme_minimal() +
+                xlab("Muestra") +  ylab("Tamaño libreria")
+
+```   
+
+### Estimamos los parámetros de dispersión:   
+
+#### Parámetro de dispersión común para todos los genes:  
+
+Estimamos un solo parámetro de dispersión común para todos los genes.
+
+```{R, edgeR_dispC, eval=doAll, warning=FALSE}
+
+dge.c = edgeR::estimateCommonDisp(dge)
+et.c = exactTest(dge.c)
+
+paste0("La dispersión obtenida es ", dge.c$common.dispersion)
+```  
+
+Mostramos los más significativos:
+
+```{R, edgeR_sig, eval=doAll, warning=FALSE}
+topTags(et.c, 2)
+``` 
+&nbsp;  
+
+Fijando un nivel de significación de 0.05, ¿Cuántos genes parecen mostrar
+expresión diferencial en función de su exposición a oxígeno?
+
+```{R, edgeR_sig2, eval=doAll, warning=FALSE}
+sum(et.c$table[,"PValue"]< 0.05)
+``` 
+
+### Ajuste de los resultados obtenidos:  
+
+Hemos asumido una dispersión común para todos los genes, pero para poder 
+interpretar los resultados debemos ajustar los p valores obtenidos, para ello
+empleamos el método de **Benjamini-Hochberg**.  
+
+```{R, edgeR_Ajuste, eval=doAll, warning=FALSE}
+p_valores <- et.c$table[,"PValue"]
+pv_ajust <- p.adjust(p_valores, "BH")
+``` 
+
+Fijando un FDR de 0.05, ¿Cuántos genes realmente presentan diferencias 
+significativas en las medias de los conteos en función del tratamiento?
+
+```{R, edgeR_Ajuste_sig, eval=doAll, warning=FALSE}
+
+sum(pv_ajust < 0.05)
+``` 
+
+Como el enunciado nos indica hemos asumido una dispersión común, aunque en 
+algunos casos, sobre todo si el tamaño de las librerías es grande esta asunción
+nos puede conducir a errores, por lo que repetimos el análisis calculando la
+dispersión por gen.  
+
+
+#### Parámetro de dispersión distinta para cada genes:
+
+En este caso asumimos dispersión distinta para cada uno de los genes.
+
+```{R, edgeR_dispT, eval=doAll, warning=FALSE}
+
+dge.t = edgeR::estimateTagwiseDisp(dge.c)
+et.t = exactTest(dge.t)
+```  
+
+Mostramos los más significativos:
+
+```{R, edgeR_sigT, eval=doAll, warning=FALSE}
+topTags(et.t, 2)
+``` 
+&nbsp;  
+
+Fijando un nivel de significación de 0.05 y asumiendo dispersiones distintas, 
+¿Cuántos genes parecen mostrar expresión diferencial en función de su 
+exposición a oxígeno?
+
+```{R, edgeR_sig2T, eval=doAll, warning=FALSE}
+sum(et.t$table[,"PValue"]< 0.05)
+``` 
+
+### Ajuste de los resultados obtenidos:  
+
+Hemos asumido una dispersiones distintas para los genes, pero para poder 
+interpretar los resultados debemos corregir los p valores obtenidos, para ello
+empleamos el método de **Benjamini-Hochberg**.   
+
+```{R, edgeR_AjusteT, eval=doAll, warning=FALSE}
+p_valores_t <- et.t$table[,"PValue"]
+pv_ajust_t <- p.adjust(p_valores_t, "BH")
+``` 
+
+Fijando un FDR de 0.05, ¿Cuántos genes realmente se expresan diferencialmente?
+
+```{R, edgeR_Ajuste_sigT, eval=doAll, warning=FALSE}
+
+sum(pv_ajust_t < 0.05)
+```  
+
+De esta forma, únicamente 31 genes presentan diferencias significativas en 
+las medias de los conteos en función de la presencia de oxigeno en el medio.  
+
+### Combinación de resultados:   
+
+Con el fin de mostrar los resultados en un informe tomaremos los genes que 
+presentan expresión diferencial en alguno de los test llevados a cabo con  
+**edgeR** (asumiendo o no dispersión común de los genes), basandonos en los 
+pvalores ajustados con el método de **Benjamini-Hochberg** con una FDR de 0.05.  
+Como información tenemos:  
+
+  * **ENTREZID** -> Identificadores ENTREZID  
+  * **ENSEMBL** -> Identificadores ENSEMBL
+  * **Pval_Common** -> P valores obtenidos asumiendo dispersión común.  
+  * **adj_Pval_Common** -> P valores ajustados asumiendo dispersión común.   
+  * **Pval_Tagwise** -> P valores asumiendo dispersión distinta por gen.  
+  * **adj_Pval_Tagwise** -> P valores ajustados asumiendo dispersión distinta.  
+
+
+
+```{R, edgeR_Result, eval=doAll, warning=FALSE}  
+# Combinamos los datos 
+result <- cbind(rowData(PRJNA821482)[mantener, c("ENTREZID", "ENSEMBL")],
+                Pval_Common = et.c$table[,"PValue"],
+                adj_Pval_Common = pv_ajust, 
+                Pval_Tagwise = et.t$table[,"PValue"],
+                adj_Pval_Tagwise = pv_ajust_t)  
+
+# Nos quedamos con los significativos:
+sign <- (pv_ajust_t < 0.05 | pv_ajust < 0.05)  
+Dat_inf <-result[sign,]
+``` 
+
+### Generación de informe:
+
+Tomamos un nivel de significación alfa de 0.05 y mostramos los resultados de los
+genes con expresión diferencial significativa en función del oxigeno en un 
+informe:
+
+```{R, Parametros_Informe1, eval=doAll, warning=FALSE}
+final_data = Dat_inf
+
+entrezid = final_data$ENTREZID
+ENTREZID= ifelse(is.na(entrezid), NA,
+                 paste0("<a href='http://www.ncbi.nlm.nih.gov/gene/?term=",
+                  entrezid,"'>",entrezid,"</a>"))
+
+
+ensembl = final_data$ENSEMBL
+ENSAMBL = ifelse(is.na(ensembl), NA,
+                      paste0("<a href='http://www.ensembl.org/Macaca_mulatta",
+                             "/Gene/Summary?db=core;g=",
+                             ensembl ,"'>",ensembl,"</a>"))
+
+```
+
+```{R, Informe1, eval=doAll, warning=FALSE}
+info = cbind(EntrezID = ENTREZID, Ensembl = ENSAMBL, 
+             final_data[,3:6],  stringsAsFactors = F )
+
+f_out = "T5_edgeR_clasico.DE"
+report_dir = "Reports/"
+titulo = paste0("PRJNA821482"," : Analisis de expresion ",
+                "diferencial (edgeR clasico).")
+
+report1 = ReportingTools::HTMLReport(shortName = f_out, title = titulo,
+                                     reportDirectory = report_dir)
+publish(info,report1)
+finish(report1)
+```  
+&nbsp;
+
+## 3.2 edgeR utilizando modelo lineal generalizado   
+
+En este apartado emplearemos todas las variables fenotípicas de las que
+disponemos para el análisis diferencial.  
+En nuestro caso tomaremos  _**Tratamiento**_ que presenta dos niveles:  
+
+  * **Hypoxia** -> Crecimiento en ausencia de oxígeno.   
+  * **Normoxia** -> Crecimiento en presencia de oxígeno.   
+  
+Y _**TipoCelular**_ que presenta dos niveles:   
+
+  * **HSC** -> Células madre hematopoyéticas.   
+  * **K562** -> Linfoblastos de paciente con leucemia mieloide crónica.  
+  
+&nbsp;
+
+Comprobamos que estas variables están en todas las muestras.   
+
+```{R, edgeR2, eval=doAll, warning=FALSE}
+which(is.na(colData(PRJNA821482)$TipoCelular))
+which(is.na(colData(PRJNA821482)$Tratamiento))
+
+``` 
+
+Construimos un objeto de tipo DGEList.  
+
+```{R, edgeR2_DGEList, eval=doAll, warning=FALSE}
+dge2 <- edgeR::DGEList(counts = assay(PRJNA821482))
+```   
+
+### Eliminación de filas con conteos bajos:  
+
+```{R, edgeR2_descart, eval=doAll, warning=FALSE}
+# Nos quedamo con la que presnetaban conteos altos del apartado anterior:
+dge2 <- dge2[mantener, keep.lib.sizes=FALSE]
+```  
+
+### Matriz de diseño:  
+
+```{R, edgeR2_Variables, eval=doAll, warning=FALSE}
+# Tomamos las variables a estudiar.
+tratamiento <- factor(colData(PRJNA821482)$Tratamiento)
+tipo_celular <- factor(colData(PRJNA821482)$TipoCelular)
+
+table(tratamiento, tipo_celular)
+```  
+
+Tenemos 3 replicas para cada condición.   
+
+Construimos una variable que recoja la combinación de ambos factores.  
+
+```{R, edgeR2_comb_fac, eval=doAll, warning=FALSE}
+# Creamos una función que concatene y asigne los nombres:
+concat <- function(x, t=tratamiento, tc=tipo_celular){ #Numero de fila
+  a = paste(t[x], tc[x],sep="_")
+  a
+}
+
+# Creamos la variable factor:
+fac = lapply(list(1:ncol(PRJNA821482)), FUN=concat)
+tt = factor(unlist(fac))
+tt
+```  
+Creamos la matriz de diseño   
+
+```{R, edgeR2_factores, eval=doAll, warning=FALSE}
+# Determinamos la matriz de diseño:  
+matriz <- model.matrix(~ 0 + tt)
+colnames(matriz) <- levels(tt)
+matriz
+
+```   
+
+### Estimación de las dispersiones   
+
+```{R, edgeR2_disp, eval=doAll, warning=FALSE}
+dge2 = edgeR::estimateDisp(dge2, matriz)
+```
+
+Empleando la función **estimateDisp** estimamos las dispersiones mediante tres
+métodos:   
+
+  * **Common dispersion** -> Dispersión común en todos los genes.    
+
+```{R, edgeR2_disp_info1, eval=doAll, warning=FALSE}
+dge2$common.dispersion
+```    
+
+  * **Tag wise dispersion** -> Dispersión a nivel de gen.   
+
+```{R, edgeR2_disp_info2, eval=doAll, warning=FALSE}
+summary(dge2$tagwise.dispersion)
+```    
+
+  * **Trended  dispersion** -> Estimación de la dispersión a nivel de genes con
+  abundancia similar.    
+
+```{R, edgeR2_disp_info3, eval=doAll, warning=FALSE}
+summary(dge2$trended.dispersion)
+```  
+A partir de los valores de dispersión, podemos calcular el coeficiente de la
+variación biológica (**BGV**) y representarlo gráficamente con la función
+**plotBCV** del paquete **edgeR**.   
+
+
+```{R, edgeR2_BCV, eval=doAll, warning=FALSE, out.align=centrado,out.width = "80%", fig.asp = 0.8, fig.width = 5, fig.cap= "Fig2. Representación del coeficiente de variación biológico (BCV) frente a la abundancia de los genes."}
+# Mostramos los resultados
+edgeR::plotBCV(dge2)
+```   
+
+### Ajuste de modelos lineales generalizados   
+
+```{R, edgeR2_ajust, eval=doAll, warning=FALSE}
+# Ajustamos los modelos lineales generalizados:  
+fit <- edgeR::glmFit(dge2, design=matriz) 
+# Influencia de las variables en los conteos:
+lrt1 = edgeR::glmLRT(fit, coef=1:4)
+topTags(lrt1)
+```   
+
+En el apartado anterior hemos obtenido información acerca de como afecta
+ el crecimiento la presencia y ausencia de oxigeno, ahora tenemos en cuenta
+además el tipo celular.  
+  
+¿ Qué información nos gustaría obtener?   
+
+  * **C_cel** -> Genes que se expresan diferentemente según el tipo celular, 
+  nos puede interesar que genes se expresan diferencialmente en las células
+  leucémicas (**K562**) con respecto a las células madre (**HSC**).    
+  * **C_HSC** -> Como afecta la hipoxia a la línea celular **HSC**.    
+  * **C_K562** -> Como afecta la hipoxia a la línea celular **K562**.   
+  * **C_total** -> Comparamos que genes se expresan diferencialmente en hipoxia
+  en las células **K562**, con respecto a las **HSC**.  
+
+```{R, edgeR2_contrast, eval=doAll, warning=FALSE}
+contrast <- limma::makeContrasts( C_cel = (Normoxia_HSC + Hypoxia_HSC)
+                                           - (Normoxia_K562 +Hypoxia_K562),
+                                  C_HSC = Normoxia_HSC - Hypoxia_HSC,
+                                  C_K562 = Normoxia_K562 - Hypoxia_K562,
+                                  C_total = (Normoxia_HSC - Hypoxia_HSC) 
+                                        - (Normoxia_K562 - Hypoxia_K562),
+                                  levels = matriz)  
+
+```   
+
+Ajustaremos todos los p valores obtenidos a través del método de
+**Benjamini-Hochberg**, y para determinar los genes que presentan expresión 
+diferencial tomaremos un **FDR** de 0.05.  
+Partiendo de esto:  
+&nbsp;   
+
+**¿Cuántos y que genes presentan expresión diferencial en la línea celular **
+**K562 con respecto a la HSC?**      
+
+```{R, edgeR2_cel, eval=doAll, warning=FALSE}
+lrt_cel = edgeR::glmLRT(fit, contrast = contrast[,"C_cel"]) 
+p_ajust_cel = p.adjust(lrt_cel$table[,"PValue"])
+sum(p_ajust_cel< 0.05)
+```   
+```{R, edgeR2_cel_top, eval=doAll, warning=FALSE}
+# Los más significativos son:
+topTags(lrt_cel)
+``` 
+
+**¿Cuántos genes presentan expresión diferencial en células HSC tras la**
+**exposición a hipoxia con respecto a normoxia?**   
+
+```{R, edgeR2_HSC, eval=doAll, warning=FALSE}
+lrt_HSC = edgeR::glmLRT(fit, contrast = contrast[,"C_HSC"]) 
+p_ajust_HSC = p.adjust(lrt_HSC$table[,"PValue"])
+sum(p_ajust_HSC< 0.05)
+``` 
+```{R, edgeR2_HSC_top, eval=doAll, warning=FALSE}
+# Los más significativos son:
+topTags(lrt_HSC)
+``` 
+
+**¿Cuántos genes presentan expresión diferencial en células K562 tras la**
+**exposición a hipoxia con respecto a normoxia?**   
+
+```{R, edgeR2_K562, eval=doAll, warning=FALSE}
+lrt_K562 = edgeR::glmLRT(fit, contrast = contrast[,"C_K562"]) 
+p_ajust_K562 = p.adjust(lrt_K562$table[,"PValue"])
+sum(p_ajust_K562< 0.05)
+```    
+
+```{R, edgeR2_K562top, eval=doAll, warning=FALSE}  
+# Los más significativos son:
+topTags(lrt_K562)
+```   
+  
+
+**¿Cuántos y qué genes responden de forma diferente a la ausencia de oxigeno**
+**en las células K562 con respecto a las HSC?**   
+
+```{R, edgeR2_total, eval=doAll, warning=FALSE}
+lrt_total = edgeR::glmLRT(fit, contrast = contrast[,"C_total"]) 
+p_ajust_total = p.adjust(lrt_total$table[,"PValue"])
+sum(p_ajust_total< 0.05)
+```   
+
+```{R, edgeR2_total_top, eval=doAll, warning=FALSE}
+# Los más significativos son:
+topTags(lrt_total)
+```   
+
+&nbsp;   
+
+**C_total** pone de manifiesto las diferencias en cuanto a respuesta a hipoxia
+en las células K562 (leucémicas) con respecto a las HSC (células madre), este
+contraste es el más relevante a nivel clínico, por lo que es el que emplearemos
+en nuestro informe.  
+  
+### Generación de informe:
+
+```{R, edgeR2_Result, eval=doAll, warning=FALSE}  
+# Combinamos los datos 
+result2 <- cbind(rowData(PRJNA821482)[mantener, c("ENTREZID", "ENSEMBL")],
+                lrt_total$table, adj_Pval= p_ajust_total)  
+
+# Nos quedamos con los significativos:
+sign <- (p_ajust_total < 0.05)  
+Dat_inf2 <-result2[sign,]
+``` 
+
+```{R, Parametros_Informe2, eval=doAll, warning=FALSE}
+final_data = Dat_inf2
+
+entrezid = final_data$ENTREZID
+ENTREZID= ifelse(is.na(entrezid), NA,
+                 paste0("<a href='http://www.ncbi.nlm.nih.gov/gene/?term=",
+                  entrezid,"'>",entrezid,"</a>"))
+
+
+ensembl = final_data$ENSEMBL
+ENSAMBL = ifelse(is.na(ensembl), NA,
+                      paste0("<a href='http://www.ensembl.org/Macaca_mulatta",
+                             "/Gene/Summary?db=core;g=",
+                             ensembl ,"'>",ensembl,"</a>"))
+
+```
+
+```{R, Informe2, eval=doAll, warning=FALSE}
+info = cbind(EntrezID = ENTREZID, Ensembl = ENSAMBL, 
+             final_data[,3:7],  stringsAsFactors = F )
+
+f_out = "T5_edgeR_contraste.DE"
+report_dir = "Reports/"
+titulo = paste0("PRJNA821482"," : Analisis de expresion diferencial",
+                " en hipoxia en ambas lineas celulares.")
+
+report2 = ReportingTools::HTMLReport(shortName = f_out, title = titulo,
+                                     reportDirectory = report_dir)
+publish(info,report2)
+finish(report2)
+```  
+
+## 3.3 edgeR utilizando cuasi-verosimilitud   
+
+En este apartado ajustamos los modelos lineales por cuasiverosimilitud.   
+Tomamos el objeto del apartado anterior.   
+
+```{R, edgeR3_ajust, eval=doAll, warning=FALSE}
+# Ajustamos los modelos lineales por cuasiverosimilitud.:  
+qlfit <- edgeR::glmQLFit(dge2, design=matriz)  
+
+# Influencia de las variables en los conteos:
+Ftest1 <- edgeR::glmLRT(qlfit, coef=1:4)
+topTags(Ftest1)
+```   
+
+Ajustaremos todos los p valores obtenidos a través del método de
+**Benjamini-Hochberg**, y para determinar los genes que presentan expresión 
+diferencial tomaremos un **FDR** de 0.05.  
+Partiendo de esto, y empleando el método de cuasiverosimilitud, nos planteamos:  
+&nbsp;   
+
+**¿Cuántos y que genes presentan expresión diferencial en la línea celular **
+**K562 con respecto a la HSC?**      
+
+```{R, edgeR3_cel, eval=doAll, warning=FALSE}
+ql_lrt_cel = edgeR::glmLRT(qlfit, contrast = contrast[,"C_cel"]) 
+p_ajust_cel = p.adjust(ql_lrt_cel$table[,"PValue"])
+sum(p_ajust_cel< 0.05)
+```   
+
+```{R, edgeR3_cel_top, eval=doAll, warning=FALSE}
+# Los más significativos son:
+topTags(ql_lrt_cel)
+``` 
+
+**¿Cuántos genes presentan expresión diferencial en células HSC tras la**
+**exposición a hipoxia con respecto a normoxia?**   
+
+```{R, edgeR3_HSC, eval=doAll, warning=FALSE}
+ql_lrt_HSC = edgeR::glmLRT(qlfit, contrast = contrast[,"C_HSC"]) 
+p_ajust_HSC = p.adjust(ql_lrt_HSC$table[,"PValue"])
+sum(p_ajust_HSC< 0.05)
+``` 
+```{R, edgeR3_HSC_top, eval=doAll, warning=FALSE}
+# Los más significativos son:
+topTags(ql_lrt_HSC)
+``` 
+
+**¿Cuántos genes presentan expresión diferencial en células K563 tras la**
+**exposición a hipoxia con respecto a normoxia?**   
+
+```{R, edgeR3_K562, eval=doAll, warning=FALSE}
+ql_lrt_K562 = edgeR::glmLRT(qlfit, contrast = contrast[,"C_K562"]) 
+p_ajust_K562 = p.adjust(ql_lrt_K562$table[,"PValue"])
+sum(p_ajust_K562< 0.05)
+```    
+
+```{R, edgeR3_K562top, eval=doAll, warning=FALSE}  
+# Los más significativos son:
+topTags(ql_lrt_K562)
+```   
+  
+
+**¿Cuántos y qué genes responden de forma diferente a la ausencia de oxigeno**
+**en las células K562 con respecto a las HSC?**   
+
+```{R, edgeR3_total, eval=doAll, warning=FALSE}
+ql_lrt_total = edgeR::glmLRT(qlfit, contrast = contrast[,"C_total"]) 
+p_ajust_total = p.adjust(ql_lrt_total$table[,"PValue"])
+sum(p_ajust_total< 0.05)
+```   
+
+```{R, edgeR3_total_top, eval=doAll, warning=FALSE}
+# Los más significativos son:
+topTags(ql_lrt_total)
+```   
+
+&nbsp;   
+
+Nuevamente nos centramos en el contraste **C_total** para generar el informe.  
+
+### Generación de informe:
+
+```{R, edgeR3_Result, eval=doAll, warning=FALSE}  
+# Combinamos los datos 
+result3 <- cbind(rowData(PRJNA821482)[mantener, c("ENTREZID", "ENSEMBL")],
+                lrt_total$table, adj_Pval= p_ajust_total)  
+
+# Nos quedamos con los significativos:
+sign <- (p_ajust_total < 0.05)  
+Dat_inf3 <-result2[sign,]
+``` 
+
+```{R, Parametros_Informe3, eval=doAll, warning=FALSE}
+final_data = Dat_inf3
+
+entrezid = final_data$ENTREZID
+ENTREZID= ifelse(is.na(entrezid), NA,
+                 paste0("<a href='http://www.ncbi.nlm.nih.gov/gene/?term=",
+                  entrezid,"'>",entrezid,"</a>"))
+
+
+ensembl = final_data$ENSEMBL
+ENSAMBL = ifelse(is.na(ensembl), NA,
+                      paste0("<a href='http://www.ensembl.org/Macaca_mulatta",
+                             "/Gene/Summary?db=core;g=",
+                             ensembl ,"'>",ensembl,"</a>"))
+
+```
+
+```{R, Informe3, eval=doAll, warning=FALSE}
+info = cbind(EntrezID = ENTREZID, Ensembl = ENSAMBL, 
+             final_data[,3:7],  stringsAsFactors = F )
+
+f_out = "T5_edgeR_cuasiverosimilitud.DE"
+report_dir = "Reports/"
+titulo = paste0("PRJNA821482"," : Analisis de expresion diferencial en hipoxia",
+                " en ambas lineas celulares mediante cuasiverosimilitud.")
+
+report3 = ReportingTools::HTMLReport(shortName = f_out, title = titulo,
+                                     reportDirectory = report_dir)
+publish(info,report3)
+finish(report3)
+```  
+
+## 3.4 DESeq2   
+
+En este último apartado emplearemos **DESeq2** para llevar a cabo el análisis 
+de expresión diferencial.  
+
+Empezamos generando un objeto de la clase **DESeqDataSet** a partir de nuestro
+**RangedSummarizedExperiment**.   
+Usaremos como matriz de diseño la misma que en los apartados **3.2** y **3.3**, 
+que tenía esta estructura:   
+
+```{R, DESeq2_mat, eval=doAll, warning=FALSE}
+matriz
+```
+
+```{R, DESeq2_1, eval=doAll, warning=FALSE}
+dds <- DESeq2::DESeqDataSet(PRJNA821482, design = (matriz))
+dds
+```
+
+
+Eliminamos los conteos bajos al igual que en las actividades anteriores. 
+
+```{R, DESeq2_2, eval=doAll, warning=FALSE}
+mantener <- rowSums(counts(dds) > 0,5) > 2
+dds = dds[mantener,]
+```   
+
+
+Hacemos el estudio de expresión diferencial.   
+
+```{R, DESeq2_dif, eval=doAll, warning=FALSE}
+dds <- DESeq(dds)
+```   
+
+¿Qué niveles tenemos?
+
+```{R, DESeq2_resname, eval=doAll, warning=FALSE}
+resultsNames(dds)
+```   
+
+Mostramos los resultados del contraste entre el efecto de la hipoxia en células 
+**HSC** y el efecto de la hipoxia sobre las células **K562** fijando un alfa 
+de 0.05 y ajustando los p valores por el método de **Benjamini-Hochberg**.  
+
+```{R, DESeq2_res, eval=doAll, warning=FALSE}
+# Contraste:
+C_total <- limma::makeContrasts( ((Normoxia_HSC - Hypoxia_HSC) 
+                                  - (Normoxia_K562 - Hypoxia_K562)),
+                                  levels = matriz)  
+res_dds = results(dds, contrast = C_total,
+                  alpha = 0.05,  pAdjustMethod = "BH")
+
+res_dds
+
+table(res_dds$padj<0.05)
+```  
+
+Según este análisis encontramos expresión diferencial en 4298 genes.  
+
+
+### Generación de informe:
+
+```{R, DESeq2_Result, eval=doAll, warning=FALSE}  
+# Combinamos los datos 
+result4 <- cbind(rowData(PRJNA821482)[mantener, c("ENTREZID", "ENSEMBL")],
+                res_dds)  
+
+# Nos quedamos con los significativos:
+sign <- (p_ajust_total < 0.05)  
+Dat_inf4 <-result2[sign,]
+``` 
+
+```{R, Parametros_Informe4, eval=doAll, warning=FALSE}
+final_data = Dat_inf4
+
+entrezid = final_data$ENTREZID
+ENTREZID= ifelse(is.na(entrezid), NA,
+                 paste0("<a href='http://www.ncbi.nlm.nih.gov/gene/?term=",
+                  entrezid,"'>",entrezid,"</a>"))
+
+
+ensembl = final_data$ENSEMBL
+ENSAMBL = ifelse(is.na(ensembl), NA,
+                      paste0("<a href='http://www.ensembl.org/Macaca_mulatta",
+                             "/Gene/Summary?db=core;g=",
+                             ensembl ,"'>",ensembl,"</a>"))
+
+```
+
+```{R, Informe4, eval=doAll, warning=FALSE}
+info = cbind(EntrezID = ENTREZID, Ensembl = ENSAMBL, 
+             final_data[,3:7],  stringsAsFactors = F )
+
+f_out = "T5_DESeq2.DE"
+report_dir = "Reports/"
+titulo = paste0("PRJNA821482"," : Analisis de expresion diferencial en hipoxia",
+                " en ambas lineas celulares mediante cuasiverosimilitud.")
+
+report4 = ReportingTools::HTMLReport(shortName = f_out, title = titulo,
+                                     reportDirectory = report_dir)
+publish(info,report4)
+finish(report4)
+```  

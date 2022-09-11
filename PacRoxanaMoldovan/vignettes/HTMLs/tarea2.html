@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<!-- saved from url=(0092)file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<meta name="generator" content="pandoc">
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Roxana Andreea Moldovan Moldovan">
+
+<meta name="date" content="2022-06-11">
+
+<title>Tarea 2. Expresión diferencialen microarrays.</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+<script type="text/javascript" src="./tarea2_files/MathJax.js.descargar"></script><style type="text/css">.MathJax_Hover_Frame {border-radius: .25em; -webkit-border-radius: .25em; -moz-border-radius: .25em; -khtml-border-radius: .25em; box-shadow: 0px 0px 15px #83A; -webkit-box-shadow: 0px 0px 15px #83A; -moz-box-shadow: 0px 0px 15px #83A; -khtml-box-shadow: 0px 0px 15px #83A; border: 1px solid #A6D ! important; display: inline-block; position: absolute}
+.MathJax_Menu_Button .MathJax_Hover_Arrow {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 4px; -webkit-border-radius: 4px; -moz-border-radius: 4px; -khtml-border-radius: 4px; font-family: 'Courier New',Courier; font-size: 9px; color: #F0F0F0}
+.MathJax_Menu_Button .MathJax_Hover_Arrow span {display: block; background-color: #AAA; border: 1px solid; border-radius: 3px; line-height: 0; padding: 4px}
+.MathJax_Hover_Arrow:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_Hover_Arrow:hover span {background-color: #CCC!important}
+</style><style type="text/css">#MathJax_About {position: fixed; left: 50%; width: auto; text-align: center; border: 3px outset; padding: 1em 2em; background-color: #DDDDDD; color: black; cursor: default; font-family: message-box; font-size: 120%; font-style: normal; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px; -khtml-border-radius: 15px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_About.MathJax_MousePost {outline: none}
+.MathJax_Menu {position: absolute; background-color: white; color: black; width: auto; padding: 2px; border: 1px solid #CCCCCC; margin: 0; cursor: default; font: menu; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_MenuItem {padding: 2px 2em; background: transparent}
+.MathJax_MenuArrow {position: absolute; right: .5em; padding-top: .25em; color: #666666; font-size: .75em}
+.MathJax_MenuActive .MathJax_MenuArrow {color: white}
+.MathJax_MenuArrow.RTL {left: .5em; right: auto}
+.MathJax_MenuCheck {position: absolute; left: .7em}
+.MathJax_MenuCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuRadioCheck {position: absolute; left: 1em}
+.MathJax_MenuRadioCheck.RTL {right: 1em; left: auto}
+.MathJax_MenuLabel {padding: 2px 2em 4px 1.33em; font-style: italic}
+.MathJax_MenuRule {border-top: 1px solid #CCCCCC; margin: 4px 1px 0px}
+.MathJax_MenuDisabled {color: GrayText}
+.MathJax_MenuActive {background-color: Highlight; color: HighlightText}
+.MathJax_MenuDisabled:focus, .MathJax_MenuLabel:focus {background-color: #E8E8E8}
+.MathJax_ContextMenu:focus {outline: none}
+.MathJax_ContextMenu .MathJax_MenuItem:focus {outline: none}
+#MathJax_AboutClose {top: .2em; right: .2em}
+.MathJax_Menu .MathJax_MenuClose {top: -10px; left: -10px}
+.MathJax_MenuClose {position: absolute; cursor: pointer; display: inline-block; border: 2px solid #AAA; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; font-family: 'Courier New',Courier; font-size: 24px; color: #F0F0F0}
+.MathJax_MenuClose span {display: block; background-color: #AAA; border: 1.5px solid; border-radius: 18px; -webkit-border-radius: 18px; -moz-border-radius: 18px; -khtml-border-radius: 18px; line-height: 0; padding: 8px 0 6px}
+.MathJax_MenuClose:hover {color: white!important; border: 2px solid #CCC!important}
+.MathJax_MenuClose:hover span {background-color: #CCC!important}
+.MathJax_MenuClose:hover:focus {outline: none}
+</style><style type="text/css">.MathJax_Preview .MJXf-math {color: inherit!important}
+</style><style type="text/css">.MJX_Assistive_MathML {position: absolute!important; top: 0; left: 0; clip: rect(1px, 1px, 1px, 1px); padding: 1px 0 0 0!important; border: 0!important; height: 1px!important; width: 1px!important; overflow: hidden!important; display: block!important; -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none}
+.MJX_Assistive_MathML.MJX_Assistive_MathML_Block {width: 100%!important}
+</style><style type="text/css">#MathJax_Zoom {position: absolute; background-color: #F0F0F0; overflow: auto; display: block; z-index: 301; padding: .5em; border: 1px solid black; margin: 0; font-weight: normal; font-style: normal; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; -webkit-box-sizing: content-box; -moz-box-sizing: content-box; box-sizing: content-box; box-shadow: 5px 5px 15px #AAAAAA; -webkit-box-shadow: 5px 5px 15px #AAAAAA; -moz-box-shadow: 5px 5px 15px #AAAAAA; -khtml-box-shadow: 5px 5px 15px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_ZoomOverlay {position: absolute; left: 0; top: 0; z-index: 300; display: inline-block; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+#MathJax_ZoomFrame {position: relative; display: inline-block; height: 0; width: 0}
+#MathJax_ZoomEventTrap {position: absolute; left: 0; top: 0; z-index: 302; display: inline-block; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+</style><style type="text/css">.MathJax_Preview {color: #888}
+#MathJax_Message {position: fixed; left: 1em; bottom: 1.5em; background-color: #E6E6E6; border: 1px solid #959595; margin: 0px; padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto; white-space: nowrap}
+#MathJax_MSIE_Frame {position: absolute; top: 0; left: 0; width: 0px; z-index: 101; border: 0px; margin: 0px; padding: 0px}
+.MathJax_Error {color: #CC0000; font-style: italic}
+</style><style type="text/css">.MJXp-script {font-size: .8em}
+.MJXp-right {-webkit-transform-origin: right; -moz-transform-origin: right; -ms-transform-origin: right; -o-transform-origin: right; transform-origin: right}
+.MJXp-bold {font-weight: bold}
+.MJXp-italic {font-style: italic}
+.MJXp-scr {font-family: MathJax_Script,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-frak {font-family: MathJax_Fraktur,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-sf {font-family: MathJax_SansSerif,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-cal {font-family: MathJax_Caligraphic,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-mono {font-family: MathJax_Typewriter,'Times New Roman',Times,STIXGeneral,serif}
+.MJXp-largeop {font-size: 150%}
+.MJXp-largeop.MJXp-int {vertical-align: -.2em}
+.MJXp-math {display: inline-block; line-height: 1.2; text-indent: 0; font-family: 'Times New Roman',Times,STIXGeneral,serif; white-space: nowrap; border-collapse: collapse}
+.MJXp-display {display: block; text-align: center; margin: 1em 0}
+.MJXp-math span {display: inline-block}
+.MJXp-box {display: block!important; text-align: center}
+.MJXp-box:after {content: " "}
+.MJXp-rule {display: block!important; margin-top: .1em}
+.MJXp-char {display: block!important}
+.MJXp-mo {margin: 0 .15em}
+.MJXp-mfrac {margin: 0 .125em; vertical-align: .25em}
+.MJXp-denom {display: inline-table!important; width: 100%}
+.MJXp-denom > * {display: table-row!important}
+.MJXp-surd {vertical-align: top}
+.MJXp-surd > * {display: block!important}
+.MJXp-script-box > *  {display: table!important; height: 50%}
+.MJXp-script-box > * > * {display: table-cell!important; vertical-align: top}
+.MJXp-script-box > *:last-child > * {vertical-align: bottom}
+.MJXp-script-box > * > * > * {display: block!important}
+.MJXp-mphantom {visibility: hidden}
+.MJXp-munderover {display: inline-table!important}
+.MJXp-over {display: inline-block!important; text-align: center}
+.MJXp-over > * {display: block!important}
+.MJXp-munderover > * {display: table-row!important}
+.MJXp-mtable {vertical-align: .25em; margin: 0 .125em}
+.MJXp-mtable > * {display: inline-table!important; vertical-align: middle}
+.MJXp-mtr {display: table-row!important}
+.MJXp-mtd {display: table-cell!important; text-align: center; padding: .5em 0 0 .5em}
+.MJXp-mtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-mlabeledtr {display: table-row!important}
+.MJXp-mlabeledtr > .MJXp-mtd:first-child {padding-left: 0}
+.MJXp-mlabeledtr:first-child > .MJXp-mtd {padding-top: 0}
+.MJXp-merror {background-color: #FFFF88; color: #CC0000; border: 1px solid #CC0000; padding: 1px 3px; font-style: normal; font-size: 90%}
+.MJXp-scale0 {-webkit-transform: scaleX(.0); -moz-transform: scaleX(.0); -ms-transform: scaleX(.0); -o-transform: scaleX(.0); transform: scaleX(.0)}
+.MJXp-scale1 {-webkit-transform: scaleX(.1); -moz-transform: scaleX(.1); -ms-transform: scaleX(.1); -o-transform: scaleX(.1); transform: scaleX(.1)}
+.MJXp-scale2 {-webkit-transform: scaleX(.2); -moz-transform: scaleX(.2); -ms-transform: scaleX(.2); -o-transform: scaleX(.2); transform: scaleX(.2)}
+.MJXp-scale3 {-webkit-transform: scaleX(.3); -moz-transform: scaleX(.3); -ms-transform: scaleX(.3); -o-transform: scaleX(.3); transform: scaleX(.3)}
+.MJXp-scale4 {-webkit-transform: scaleX(.4); -moz-transform: scaleX(.4); -ms-transform: scaleX(.4); -o-transform: scaleX(.4); transform: scaleX(.4)}
+.MJXp-scale5 {-webkit-transform: scaleX(.5); -moz-transform: scaleX(.5); -ms-transform: scaleX(.5); -o-transform: scaleX(.5); transform: scaleX(.5)}
+.MJXp-scale6 {-webkit-transform: scaleX(.6); -moz-transform: scaleX(.6); -ms-transform: scaleX(.6); -o-transform: scaleX(.6); transform: scaleX(.6)}
+.MJXp-scale7 {-webkit-transform: scaleX(.7); -moz-transform: scaleX(.7); -ms-transform: scaleX(.7); -o-transform: scaleX(.7); transform: scaleX(.7)}
+.MJXp-scale8 {-webkit-transform: scaleX(.8); -moz-transform: scaleX(.8); -ms-transform: scaleX(.8); -o-transform: scaleX(.8); transform: scaleX(.8)}
+.MJXp-scale9 {-webkit-transform: scaleX(.9); -moz-transform: scaleX(.9); -ms-transform: scaleX(.9); -o-transform: scaleX(.9); transform: scaleX(.9)}
+.MathJax_PHTML .noError {vertical-align: ; font-size: 90%; text-align: left; color: black; padding: 1px 3px; border: 1px solid}
+</style></head>
+
+<body><div id="MathJax_Message" style="display: none;"></div>
+
+
+
+
+<h1 class="title toc-ignore">Tarea 2. Expresión diferencialen
+microarrays.</h1>
+<h4 class="author">Roxana Andreea Moldovan Moldovan</h4>
+<h4 class="date">2022-06-11</h4>
+
+
+
+<hr>
+<div id="introducción" class="section level1">
+<h1>1. Introducción</h1>
+<p>En esta tarea llevaremos a cabo un análisis de la expresión
+diferencial a partir de los datos de la <strong>Tarea 1</strong>
+(disponibles en ArrayExpress: <a href="https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-75759">E-GEOD-75759</a>,
+y GEO: <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75759">GSE75759</a>).<br>
+En este estudio se analizaba el patrón de expresión génica mediante
+microarrays de 14 primates 8 de los cuales fueron expuestos dos días
+consecutivos, durante 6 hora, a dosis de entre 6 y 6,5 ppm de
+formaldehído, mientras que 6 fueron expuestos únicamente a aire filtrado
+(control).<br>
+Por otro lado, también encontramos dos grupos en función del tejido de
+procedencia de las muestras ya que por un lado tenemos glóbulos blancos
+y por otro células del epitelio nasal.<br>
+&nbsp;</p>
+<hr>
+</div>
+<div id="carga-de-datos." class="section level1">
+<h1>2. Carga de datos.</h1>
+<div id="paquetes-empleados" class="section level2">
+<h2>Paquetes empleados:</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb1-1" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(ArrayExpress, genefilter, limma)</span>
+<span id="cb1-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb1-2" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(ReportingTools)</span></code></pre></div>
+</div>
+<div id="carga-de-datos-del-experimento." class="section level2">
+<h2>Carga de datos del experimento.</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb2-1" aria-hidden="true" tabindex="-1"></a>datos<span class="ot">=</span><span class="st">"geod75759_rma.rda"</span></span>
+<span id="cb2-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">paste</span>(dir_datos, datos, <span class="at">sep=</span><span class="st">""</span>))</span></code></pre></div>
+<p>&nbsp;</p>
+</div>
+</div>
+<div id="analisis-de-expresión-diferencial." class="section level1">
+<h1>3. Analisis de expresión diferencial.</h1>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Datos fenotípicos de la primera muestra:</span></span>
+<span id="cb3-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb3-2" aria-hidden="true" tabindex="-1"></a>(<span class="fu">pData</span>(geod75759_rma)[<span class="dv">1</span>,])</span></code></pre></div>
+<pre><code>##                             Source.Name Sample_type Sample_treatment
+## GSM1966868_7851_ExpWBC.CEL GSM1966868 1         WBC     Formaldehyde
+##                                                                                                                                                        Comment..Sample_description.
+## GSM1966868_7851_ExpWBC.CEL Gene expression data from circulating white blood cells of cynomologus macaques exposed to filtered air for 2-day, 6-hour whole body inhalation exposure
+##                                                                                                                                Comment..Sample_source_name.
+## GSM1966868_7851_ExpWBC.CEL white blood cells from male cynomolgous macaque collected immediately following the second 6-hour exposure to 6 ppm formaldehyde
+##                            Comment..Sample_title. Characteristics..organism.
+## GSM1966868_7851_ExpWBC.CEL  WBC_Formaldehyde_Rep5        Macaca fascicularis
+##                            Term.Source.REF
+## GSM1966868_7851_ExpWBC.CEL             EFO
+##                                                    Term.Accession.Number
+## GSM1966868_7851_ExpWBC.CEL http://purl.obolibrary.org/obo/NCBITaxon_9541
+##                            Characteristics..organism.part.
+## GSM1966868_7851_ExpWBC.CEL   circulating white blood cells
+##                            Characteristics..sex. Term.Source.REF.1
+## GSM1966868_7851_ExpWBC.CEL                  male               EFO
+##                                                Term.Accession.Number.1
+## GSM1966868_7851_ExpWBC.CEL http://purl.obolibrary.org/obo/PATO_0000384
+##                            Protocol.REF Term.Source.REF.2 Protocol.REF.1
+## GSM1966868_7851_ExpWBC.CEL P-GSE75759-2      ArrayExpress   P-GSE75759-3
+##                            Term.Source.REF.3         Extract.Name Material.Type
+## GSM1966868_7851_ExpWBC.CEL      ArrayExpress GSM1966868 extract 1     total RNA
+##                            Protocol.REF.2 Term.Source.REF.4
+## GSM1966868_7851_ExpWBC.CEL   P-GSE75759-4      ArrayExpress
+##                            Labeled.Extract.Name
+## GSM1966868_7851_ExpWBC.CEL      GSM1966868 LE 1
+##                                                                                                                                                         Label
+## GSM1966868_7851_ExpWBC.CEL terminal deoxynucleotidyl transferase (TdT) in the presence of a proprietary biotinylated compound, GeneChip® DNA Labeling Reagent
+##                            Protocol.REF.3 Term.Source.REF.5 Assay.Name
+## GSM1966868_7851_ExpWBC.CEL   P-GSE75759-5      ArrayExpress GSM1966868
+##                            Array.Design.REF Term.Source.REF.6 Technology.Type
+## GSM1966868_7851_ExpWBC.CEL     A-GEOD-21213      ArrayExpress     array assay
+##                            Protocol.REF.4 Term.Source.REF.7
+## GSM1966868_7851_ExpWBC.CEL   P-GSE75759-6      ArrayExpress
+##                                       Array.Data.File
+## GSM1966868_7851_ExpWBC.CEL GSM1966868_7851_ExpWBC.CEL
+##                                                                                                  Comment..ArrayExpress.FTP.file.
+## GSM1966868_7851_ExpWBC.CEL ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-75759/E-GEOD-75759.raw.1.zip
+##                            Protocol.REF.5 Term.Source.REF.8
+## GSM1966868_7851_ExpWBC.CEL   P-GSE75759-1      ArrayExpress
+##                                          Normalization.Name
+## GSM1966868_7851_ExpWBC.CEL GSM1966868_sample_table.txt norm
+##                                Derived.Array.Data.File
+## GSM1966868_7851_ExpWBC.CEL GSM1966868_sample_table.txt
+##                                                                                                Comment..Derived.ArrayExpress.FTP.file.
+## GSM1966868_7851_ExpWBC.CEL ftp://ftp.ebi.ac.uk/pub/databases/microarray/data/experiment/GEOD/E-GEOD-75759/E-GEOD-75759.processed.1.zip
+##                              FactorValue..organism.part.
+## GSM1966868_7851_ExpWBC.CEL circulating white blood cells</code></pre>
+<p>&nbsp;</p>
+<p>Como hemos explicado anteriormente tenemos datos relativos de
+expresión bajo dos condiciones experimentales y dos tipos de
+tejidos.<br>
+Para el análisis de la expresión diferencial nos centraremos en primer
+lugar en el efecto del formaldehído en la expresión, para ello tomaremos
+la variable fenotípica <em><strong>Sample_treatment</strong></em> que
+presenta dos niveles:</p>
+<ul>
+<li><strong>Formaldehyde</strong> -&gt; Sujetos expuestos a
+formaldehído.<br>
+</li>
+<li><strong>Filtered_Air</strong> -&gt; Sujetos expuestos a aire
+filtrado.</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tomamos el factor a estudiar</span></span>
+<span id="cb5-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb5-2" aria-hidden="true" tabindex="-1"></a>tratamiento <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">pData</span>(geod75759_rma)<span class="sc">$</span>Sample_treatment)</span></code></pre></div>
+<p>&nbsp;</p>
+<div id="t-test" class="section level2">
+<h2>T-test</h2>
+<p>En primer lugar, utilizando <em><strong>rowttests</strong></em> del
+paquete <em><strong>genefilter</strong></em> llevaremos a cabo una un
+test de la t fila por fila, es decir para cada uno de los genes,
+asumiendo igualdad de varianzas.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Test de la t:</span></span>
+<span id="cb6-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb6-2" aria-hidden="true" tabindex="-1"></a>tt <span class="ot">&lt;-</span> genefilter<span class="sc">::</span><span class="fu">rowttests</span>(geod75759_rma, tratamiento)</span>
+<span id="cb6-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tt)</span></code></pre></div>
+<pre><code>##           statistic          dm   p.value
+## 13579638 -0.1959158 -0.05670342 0.8471426
+## 13579671 -0.4450212 -0.03433840 0.6622660
+## 13579689 -1.3196299 -0.17415016 0.2055304
+## 13579692 -0.6965283 -0.05841810 0.4960935
+## 13579703 -0.2529926 -0.03201256 0.8034957
+## 13579724 -1.0808148 -0.10433982 0.2958020</code></pre>
+<p>En el t-test parao obtenemos la siguiente información:</p>
+<ul>
+<li><strong>statistic</strong> -&gt; Estadístico t del contraste de
+hipótesis para la igualdad de las medias (asumiendo igualdad de
+varianzas).<br>
+</li>
+<li><strong>dm</strong> -&gt; Diferencia de medias entre grupos.</li>
+<li><strong>p.value</strong> -&gt; p-valor del contraste.</li>
+</ul>
+<p>A partir del p value obtenido, comparándolo con un nivel de
+significación <em>alfa</em>, que fijaremos en 0,05, podemos determinar
+cuantos genes presentan expresión diferencial.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># P.value:</span></span>
+<span id="cb8-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb8-2" aria-hidden="true" tabindex="-1"></a>alfa <span class="ot">=</span> <span class="fl">0.05</span>  <span class="co"># Fijamos un alfa de 0,05</span></span>
+<span id="cb8-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb8-3" aria-hidden="true" tabindex="-1"></a>pv_original <span class="ot">=</span> tt<span class="sc">$</span>p.value</span>
+<span id="cb8-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>( pv_original <span class="sc">&lt;=</span> alfa)</span></code></pre></div>
+<pre><code>## 
+## FALSE  TRUE 
+## 13000   242</code></pre>
+<p>Encontramos que para 242 de los 13242 se ha obtenido un p-value menor
+de 0,05, es decir que 242 genes muestran expresión diferencial entre los
+grupos de tratamiento.<br>
+Los más significativos son:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mostramos los genes más significativos:</span></span>
+<span id="cb10-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb10-2" aria-hidden="true" tabindex="-1"></a>sig <span class="ot">&lt;-</span> tt[<span class="fu">order</span>(tt<span class="sc">$</span>p.value),]</span>
+<span id="cb10-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(sig)</span></code></pre></div>
+<pre><code>##          statistic         dm      p.value
+## 13810751  5.592814  0.5442101 4.043259e-05
+## 13722805  4.931394  0.5672633 1.503284e-04
+## 14212526 -4.426436 -0.3025237 4.233673e-04
+## 13650522 -4.125172 -0.3756939 7.935543e-04
+## 13777230  3.818723  1.0081559 1.511826e-03
+## 13762947  3.793723  0.3170538 1.593700e-03</code></pre>
+<p>&nbsp;</p>
+</div>
+<div id="ajuste-de-los-p_values" class="section level2">
+<h2>Ajuste de los p_values</h2>
+<p>En este punto procederemos a ajustar los p-valores originales
+obtenidos en el t-test a través de dos métodos.</p>
+<div id="método-de-bonferroni" class="section level3">
+<h3>Método de Bonferroni</h3>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ajustamos por el método de Bonferroni:</span></span>
+<span id="cb12-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb12-2" aria-hidden="true" tabindex="-1"></a>pv_Bf <span class="ot">&lt;-</span> <span class="fu">p.adjust</span>(tt<span class="sc">$</span>p.value, <span class="at">method =</span> <span class="st">"bonferroni"</span>)</span>
+<span id="cb12-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Mostramos los genes significativos:</span></span>
+<span id="cb12-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>( pv_Bf <span class="sc">&lt;</span> alfa)</span></code></pre></div>
+<pre><code>## 
+## FALSE 
+## 13242</code></pre>
+<p>Tras el ajuste de los p-valores originales por el método de
+<strong>Bonferroni</strong>, y fijando un <strong>FDR</strong> de 0.05
+ninguno de los resultados parece significativo, por lo que no habría
+expresión diferencial entre los dos niveles de tratamiento.</p>
+</div>
+<div id="método-de-benjamini-hochberg" class="section level3">
+<h3>Método de Benjamini-Hochberg</h3>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ajustamos por el método de Benjamini-Hochberg:</span></span>
+<span id="cb14-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb14-2" aria-hidden="true" tabindex="-1"></a>pv_BH <span class="ot">&lt;-</span> <span class="fu">p.adjust</span>(pv_original, <span class="at">method =</span> <span class="st">"BH"</span>)</span>
+<span id="cb14-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Mostramos los genes significativos:</span></span>
+<span id="cb14-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>( pv_BH <span class="sc">&lt;</span> alfa)</span></code></pre></div>
+<pre><code>## 
+## FALSE 
+## 13242</code></pre>
+<p>Tras el ajuste de los p-valores originales por el método de
+<strong>Benjamini-Hochberg</strong> y , al igual que en el caso
+anterior, tomando un <strong>FDR</strong> de 0.05, no se podría afirmar
+que tenemos expresión diferencial tras el tratamiento para ningún
+gen.</p>
+<p>&nbsp;</p>
+</div>
+</div>
+<div id="incorporación-de-resultados-a-un-data-frame." class="section level2">
+<h2>Incorporación de resultados a un data frame.</h2>
+<p>A continuación crearemos un data frame que recoja tanto la anotación
+de nuestros genes (contenido en fData), como los p-valores obtenidos en
+el test de la t, y los p valores ajustados mediante Bonferroni y
+Benjamini-Hochberg.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Creación del data frame:</span></span>
+<span id="cb16-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb16-2" aria-hidden="true" tabindex="-1"></a>df1 <span class="ot">=</span><span class="fu">cbind</span>(<span class="fu">fData</span>(geod75759_rma), <span class="at">Pvalue =</span> pv_original, </span>
+<span id="cb16-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb16-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">adj.Pval.Bf =</span>pv_Bf, <span class="at">adj.Pval.BH=</span>pv_BH)</span>
+<span id="cb16-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df1)</span></code></pre></div>
+<pre><code>##       ENTREZID  PROBEID       ENSEMBLTRANS GENSYMBOL            ENSAMBL
+## 7517    699677 13579638 ENSMMUT00000032498    LRPAP1 ENSMMUG00000023099
+## 23063   720098 13579671 ENSMMUT00000011722 LOC720098 ENSMMUG00000008383
+## 23901   722333 13579689 ENSMMUT00000001640 LOC722333               &lt;NA&gt;
+## 23905   722339 13579692 ENSMMUT00000047703 LOC722339               &lt;NA&gt;
+## 23906   722345 13579703 ENSMMUT00000001638 LOC722345 ENSMMUG00000048558
+## 23914   722353 13579724 ENSMMUT00000001629 LOC722353 ENSMMUG00000001156
+##          Pvalue adj.Pval.Bf adj.Pval.BH
+## 7517  0.8471426           1   0.9998919
+## 23063 0.6622660           1   0.9998919
+## 23901 0.2055304           1   0.9998919
+## 23905 0.4960935           1   0.9998919
+## 23906 0.8034957           1   0.9998919
+## 23914 0.2958020           1   0.9998919</code></pre>
+</div>
+<div id="generación-de-informe" class="section level2">
+<h2>Generación de informe:</h2>
+<p>A pesar de no haber obtenido genes significativos, mostramos los
+resultados del test de la T en un informe:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-1" aria-hidden="true" tabindex="-1"></a>final_data <span class="ot">=</span> df1</span>
+<span id="cb18-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-3" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(final_data<span class="sc">$</span>PROBEID), <span class="cn">NA</span>, final_data<span class="sc">$</span>PROBEID)</span>
+<span id="cb18-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-5" aria-hidden="true" tabindex="-1"></a>entrezid <span class="ot">=</span> final_data<span class="sc">$</span>ENTREZID</span>
+<span id="cb18-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-6" aria-hidden="true" tabindex="-1"></a>ENTREZID<span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(entrezid), <span class="cn">NA</span>,</span>
+<span id="cb18-7"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-7" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">"&lt;a href='http://www.ncbi.nlm.nih.gov/gene/?term="</span>,</span>
+<span id="cb18-8"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-8" aria-hidden="true" tabindex="-1"></a>                  entrezid,<span class="st">"'&gt;"</span>,entrezid,<span class="st">"&lt;/a&gt;"</span>))</span>
+<span id="cb18-9"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-10" aria-hidden="true" tabindex="-1"></a>ensemblT <span class="ot">=</span> final_data<span class="sc">$</span>ENSEMBLTRANS</span>
+<span id="cb18-11"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-11" aria-hidden="true" tabindex="-1"></a>ENSEMBLTRANS <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensemblT), <span class="cn">NA</span>,</span>
+<span id="cb18-12"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-12" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">"&lt;a href='http://www.ensembl.org/"</span>,</span>
+<span id="cb18-13"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-13" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"Macaca_mulatta/Transcript/Idhistory?t="</span>,</span>
+<span id="cb18-14"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-14" aria-hidden="true" tabindex="-1"></a>                             ensemblT ,<span class="st">"'&gt;"</span>,ensemblT,<span class="st">"&lt;/a&gt;"</span>))</span>
+<span id="cb18-15"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-16" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">=</span> final_data<span class="sc">$</span>ENSAMBL</span>
+<span id="cb18-17"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-17" aria-hidden="true" tabindex="-1"></a>ENSAMBL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensembl), <span class="cn">NA</span>,</span>
+<span id="cb18-18"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-18" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">"&lt;a href='http://www.ensembl.org/Macaca_mulatta"</span>,</span>
+<span id="cb18-19"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-19" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"/Gene/Summary?db=core;g="</span>,</span>
+<span id="cb18-20"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-20" aria-hidden="true" tabindex="-1"></a>                             ensembl ,<span class="st">"'&gt;"</span>,ensembl,<span class="st">"&lt;/a&gt;"</span>))</span>
+<span id="cb18-21"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-22"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb18-22" aria-hidden="true" tabindex="-1"></a>GENSYMBOL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(final_data<span class="sc">$</span>GENSYMBOL), <span class="cn">NA</span>, final_data<span class="sc">$</span>GENSYMBOL)</span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-1" aria-hidden="true" tabindex="-1"></a>info <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">ID=</span><span class="fu">as.character</span>(final_data<span class="sc">$</span>PROBEID), <span class="at">EntrezID =</span> ENTREZID, </span>
+<span id="cb19-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">EnsemblT=</span>ENSEMBLTRANS,</span>
+<span id="cb19-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">EnsemblGen =</span> ENSAMBL, <span class="at">GenSymbol =</span> GENSYMBOL,</span>
+<span id="cb19-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">Pvalue =</span> final_data<span class="sc">$</span>Pvalue,</span>
+<span id="cb19-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">adj.Pval.bonferroni =</span> <span class="fu">as.numeric</span>(final_data<span class="sc">$</span>adj.Pval.Bf),</span>
+<span id="cb19-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">adj.Pval.BH =</span> <span class="fu">as.numeric</span>(final_data<span class="sc">$</span>adj.Pval.BH), </span>
+<span id="cb19-7"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">stringsAsFactors =</span> F )</span>
+<span id="cb19-8"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-9"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-9" aria-hidden="true" tabindex="-1"></a>f_out <span class="ot">=</span> <span class="st">"T2_Ttest.DE"</span></span>
+<span id="cb19-10"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-10" aria-hidden="true" tabindex="-1"></a>report_dir <span class="ot">=</span> <span class="st">"Reports/"</span></span>
+<span id="cb19-11"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-11" aria-hidden="true" tabindex="-1"></a>titulo <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">"geod75759"</span>,<span class="st">" : Analisis de expresion "</span>,</span>
+<span id="cb19-12"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-12" aria-hidden="true" tabindex="-1"></a>                <span class="st">"diferencial (t-test con varianzas iguales)"</span>)</span>
+<span id="cb19-13"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-14"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-14" aria-hidden="true" tabindex="-1"></a>report1 <span class="ot">=</span> ReportingTools<span class="sc">::</span><span class="fu">HTMLReport</span>(<span class="at">shortName =</span> f_out, <span class="at">title =</span> titulo,</span>
+<span id="cb19-15"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-15" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">reportDirectory =</span> report_dir)</span>
+<span id="cb19-16"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="fu">publish</span>(info,report1)</span>
+<span id="cb19-17"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb19-17" aria-hidden="true" tabindex="-1"></a><span class="fu">finish</span>(report1)</span></code></pre></div>
+<pre><code>## [1] "Reports//T2_Ttest.DE.html"</code></pre>
+<p>&nbsp;</p>
+<hr>
+</div>
+</div>
+<div id="test-de-la-t-moderada" class="section level1">
+<h1>3. Test de la t moderada</h1>
+<p>Empleando el paquete <em><strong>limma</strong></em> para analizar la
+dependencia de la expresión a las distintas variables.</p>
+<div id="matriz-de-diseño" class="section level2">
+<h2>Matriz de diseño:</h2>
+<p>Para ello lo primero será determinar la matriz de diseño, en esta
+cada fila se corresponderá con una muestra y se indicará con un 0 o un 1
+a que grupo pertenece según el factor escogido (0=Control, 1=Tratado con
+formaldehído).</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb21-1" aria-hidden="true" tabindex="-1"></a>tratamiento <span class="ot">&lt;-</span> <span class="fu">pData</span>(geod75759_rma)<span class="sc">$</span>Sample_treatment</span>
+<span id="cb21-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Matriz de diseño:</span></span>
+<span id="cb21-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb21-4" aria-hidden="true" tabindex="-1"></a>matriz <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> tratamiento)</span>
+<span id="cb21-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(matriz) <span class="ot">&lt;-</span> <span class="fu">c</span>( <span class="st">"Formaldehido"</span>, <span class="st">"Control"</span>)</span>
+<span id="cb21-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb21-6" aria-hidden="true" tabindex="-1"></a>matriz</span></code></pre></div>
+<pre><code>##    Formaldehido Control
+## 1             1       0
+## 2             1       0
+## 3             1       0
+## 4             1       0
+## 5             1       0
+## 6             0       1
+## 7             0       1
+## 8             0       1
+## 9             0       1
+## 10            0       1
+## 11            1       0
+## 12            1       0
+## 13            1       0
+## 14            1       0
+## 15            0       1
+## 16            0       1
+## 17            0       1
+## 18            0       1
+## attr(,"assign")
+## [1] 1 1
+## attr(,"contrasts")
+## attr(,"contrasts")$tratamiento
+## [1] "contr.treatment"</code></pre>
+</div>
+<div id="ajuste-de-los-modelos-lineales" class="section level2">
+<h2>Ajuste de los modelos lineales:</h2>
+<p>Usamos la función <strong>lmFit</strong> para ajustar los modelos
+lineales por mínimos cuadrados ponderados o generalizados, ajusta un
+modelo para cada una de las sondas.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb23-1" aria-hidden="true" tabindex="-1"></a>ajusteA <span class="ot">&lt;-</span> <span class="fu">lmFit</span>(geod75759_rma, matriz)</span>
+<span id="cb23-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb23-2" aria-hidden="true" tabindex="-1"></a>matriz_contrastes <span class="ot">&lt;-</span> <span class="fu">makeContrasts</span>( <span class="at">dif =</span> Control <span class="sc">-</span> Formaldehido,</span>
+<span id="cb23-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb23-3" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">levels =</span> matriz)</span>
+<span id="cb23-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb23-4" aria-hidden="true" tabindex="-1"></a>matriz_contrastes</span></code></pre></div>
+<pre><code>##               Contrasts
+## Levels         dif
+##   Formaldehido  -1
+##   Control        1</code></pre>
+</div>
+<div id="estimación-empirical-bayes-statistics-for-differential-expression" class="section level2">
+<h2>Estimación (Empirical Bayes Statistics for Differential
+Expression):</h2>
+<p><strong>contrasts.fit</strong> permite calcular los coeficientes
+estimados y los errores estándar para un conjunto de datos dada la
+matriz de diseño y el ajuste de los modelos lineales obtenido en el paso
+anterior.<br>
+A continuación, con el fin de clasificar los genes en orden de evidencia
+de expresión diferencial, aplicamos <strong>eBayes</strong> al objeto
+previamente ajustado, este computa el <strong>test de la t
+moderada</strong>, las estadísticas F moderadas y las probabilidades
+logarítmicas de la expresión diferencial mediante la moderación empírica
+de Bayes de los errores estándar hacia un valor global.</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb25-1" aria-hidden="true" tabindex="-1"></a>ajusteB <span class="ot">&lt;-</span> <span class="fu">contrasts.fit</span>(ajusteA, matriz_contrastes)</span>
+<span id="cb25-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb25-2" aria-hidden="true" tabindex="-1"></a>ajusteC <span class="ot">&lt;-</span> <span class="fu">eBayes</span>(ajusteB)</span></code></pre></div>
+</div>
+<div id="resultados" class="section level2">
+<h2>Resultados</h2>
+<p>Ajustamos el p-valor obtenido por el método de
+<strong>Benjamini-Hochberg</strong> y obtenemos que los genes con
+expresión diferencial más significativa son:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb26-1" aria-hidden="true" tabindex="-1"></a>sig <span class="ot">&lt;-</span> <span class="fu">topTable</span>(ajusteC, <span class="at">number =</span> <span class="dv">10</span>, <span class="at">coef =</span> <span class="dv">1</span>, <span class="at">adjust.method =</span><span class="st">"BH"</span>)</span>
+<span id="cb26-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb26-2" aria-hidden="true" tabindex="-1"></a>sig</span></code></pre></div>
+<pre><code>##           ENTREZID  PROBEID       ENSEMBLTRANS    GENSYMBOL            ENSAMBL
+## 13810751    709685 13810751 ENSMMUT00000047981        VSIG4 ENSMMUG00000002750
+## 13722805    702488 13722805 ENSMMUT00000012277    LOC702488               &lt;NA&gt;
+## 13777230 100425012 13777230 ENSMMUT00000033466 LOC100425012               &lt;NA&gt;
+## 14212526    712690 14212526 ENSMMUT00000016846    LOC712690 ENSMMUG00000012028
+## 13650522    716640 13650522 ENSMMUT00000019390    LOC716640               &lt;NA&gt;
+## 13689785    700084 13689785 ENSMMUT00000012649       CCDC11 ENSMMUG00000009049
+## 13654981    718716 13654981 ENSMMUT00000019581  C14H11orf83 ENSMMUG00000013950
+## 13817460    719274 13817460 ENSMMUT00000018740        PPIL1               &lt;NA&gt;
+## 13762947    713764 13762947 ENSMMUT00000032284        WNT8A ENSMMUG00000022937
+## 13777227    706886 13777227 ENSMMUT00000003381    LOC706886 ENSMMUG00000002383
+##               logFC  AveExpr         t      P.Value adj.P.Val         B
+## 13810751 -0.5442101 7.399871 -5.376966 4.221902e-05 0.5590643 -2.354239
+## 13722805 -0.5672633 5.888375 -4.862501 1.272123e-04 0.8422730 -2.573676
+## 13777230 -1.0081559 7.941065 -3.981752 8.837281e-04 0.9998912 -3.008367
+## 14212526  0.3025237 7.897775  3.920789 1.011898e-03 0.9998912 -3.041119
+## 13650522  0.3756939 4.297027  3.918180 1.017782e-03 0.9998912 -3.042528
+## 13689785  0.5263090 6.250784  3.812485 1.287255e-03 0.9998912 -3.100088
+## 13654981  0.5285584 9.173707  3.782438 1.376146e-03 0.9998912 -3.116620
+## 13817460 -0.3968796 7.595633 -3.605855 2.036983e-03 0.9998912 -3.215225
+## 13762947 -0.3170538 5.219910 -3.539806 2.358335e-03 0.9998912 -3.252708
+## 13777227 -0.7643588 5.638796 -3.504134 2.552308e-03 0.9998912 -3.273080</code></pre>
+<p>Observamos que en ninguno de los casos el p-valor ajustado es menor
+que 0,05 por lo que no habría dependencia entre la exposición al
+formaldehído y los niveles de expresión de los genes.</p>
+<p>&nbsp;</p>
+<hr>
+</div>
+</div>
+<div id="análisis-limma-para-dos-covariables" class="section level1">
+<h1>4. Análisis limma para dos covariables</h1>
+<p>Además del tratamiento, en este estudio disponemos de una segunda
+variable fenotípica de tipo factor que describe el tejido de
+proveniencia de las muestras:</p>
+<ul>
+<li><strong>WBC</strong> -&gt; <em>Circulating white blood
+cells</em></li>
+<li><strong>NE</strong> -&gt; <em>Nasal epithleium</em></li>
+</ul>
+<p>En este apartado emplearemos <em><strong>limma</strong></em> para
+llevar a cabo un análisis de expresión diferencial sobre dos
+covariables, el tejido de proveniencia y la exposición a formaldehído
+con el fin de obtener la siguiente información:</p>
+<ul>
+<li>Genes que muestran expresión diferencial según el tejido de
+proveniencia.<br>
+</li>
+<li>Genes que muestran expresión diferencial tras la exposición al
+formaldehído.<br>
+</li>
+<li>Genes que se expresan diferencialmente tras la exposición a
+formaldehído en glóbulos blancos <strong>WBC</strong>, con respecto al
+epitelio nasal <strong>NE</strong>.</li>
+</ul>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Tomamos las variables a estudiar.</span></span>
+<span id="cb28-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb28-2" aria-hidden="true" tabindex="-1"></a>tratamiento <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">pData</span>(geod75759_rma)<span class="sc">$</span>Sample_treatment)</span>
+<span id="cb28-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb28-3" aria-hidden="true" tabindex="-1"></a>tejido <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">pData</span>(geod75759_rma)<span class="sc">$</span>Sample_type)</span>
+<span id="cb28-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(tratamiento, tejido)</span></code></pre></div>
+<pre><code>##               tejido
+## tratamiento    WBC NE
+##   Formaldehyde   5  4
+##   Filtered_Air   5  4</code></pre>
+<p>Con fines prácticos construimos una solo factor que recoja la
+información de las posibles combinaciones entre los dos factores
+previamente mencionados.</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Creamos una función que concatene y asigne los nombres:</span></span>
+<span id="cb30-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-2" aria-hidden="true" tabindex="-1"></a>concat <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">t=</span>tratamiento, <span class="at">tj=</span>tejido){ <span class="co">#Numero de fila</span></span>
+<span id="cb30-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-3" aria-hidden="true" tabindex="-1"></a>  a <span class="ot">=</span> <span class="fu">paste</span>(t[x], tj[x],<span class="at">sep=</span><span class="st">"_"</span>)</span>
+<span id="cb30-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-4" aria-hidden="true" tabindex="-1"></a>  a</span>
+<span id="cb30-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb30-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Creamos la variable factor:</span></span>
+<span id="cb30-8"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-8" aria-hidden="true" tabindex="-1"></a>fac <span class="ot">=</span> <span class="fu">lapply</span>(<span class="fu">list</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(geod75759_rma)), <span class="at">FUN=</span>concat)</span>
+<span id="cb30-9"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-9" aria-hidden="true" tabindex="-1"></a>trat_tej <span class="ot">=</span> <span class="fu">factor</span>(<span class="fu">unlist</span>(fac))</span>
+<span id="cb30-10"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb30-10" aria-hidden="true" tabindex="-1"></a>trat_tej</span></code></pre></div>
+<pre><code>##  [1] Formaldehyde_WBC Formaldehyde_WBC Formaldehyde_WBC Formaldehyde_WBC
+##  [5] Formaldehyde_WBC Filtered_Air_WBC Filtered_Air_WBC Filtered_Air_WBC
+##  [9] Filtered_Air_WBC Filtered_Air_WBC Formaldehyde_NE  Formaldehyde_NE 
+## [13] Formaldehyde_NE  Formaldehyde_NE  Filtered_Air_NE  Filtered_Air_NE 
+## [17] Filtered_Air_NE  Filtered_Air_NE 
+## 4 Levels: Filtered_Air_NE Filtered_Air_WBC ... Formaldehyde_WBC</code></pre>
+<div id="matriz-de-diseño-1" class="section level2">
+<h2>Matriz de diseño:</h2>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Determinamos la matriz de diseño:</span></span>
+<span id="cb32-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb32-2" aria-hidden="true" tabindex="-1"></a>matriz2 <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> trat_tej)</span>
+<span id="cb32-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(matriz2) <span class="ot">&lt;-</span> <span class="fu">levels</span>(trat_tej)</span>
+<span id="cb32-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb32-4" aria-hidden="true" tabindex="-1"></a>matriz2</span></code></pre></div>
+<pre><code>##    Filtered_Air_NE Filtered_Air_WBC Formaldehyde_NE Formaldehyde_WBC
+## 1                0                0               0                1
+## 2                0                0               0                1
+## 3                0                0               0                1
+## 4                0                0               0                1
+## 5                0                0               0                1
+## 6                0                1               0                0
+## 7                0                1               0                0
+## 8                0                1               0                0
+## 9                0                1               0                0
+## 10               0                1               0                0
+## 11               0                0               1                0
+## 12               0                0               1                0
+## 13               0                0               1                0
+## 14               0                0               1                0
+## 15               1                0               0                0
+## 16               1                0               0                0
+## 17               1                0               0                0
+## 18               1                0               0                0
+## attr(,"assign")
+## [1] 1 1 1 1
+## attr(,"contrasts")
+## attr(,"contrasts")$trat_tej
+## [1] "contr.treatment"</code></pre>
+</div>
+<div id="ajuste-de-los-modelos-lineales-1" class="section level2">
+<h2>Ajuste de los modelos lineales:</h2>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Ajuste:</span></span>
+<span id="cb34-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb34-2" aria-hidden="true" tabindex="-1"></a>ajusteA2 <span class="ot">&lt;-</span> <span class="fu">lmFit</span>(geod75759_rma, matriz2)</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Construcción de los contrastes:</span></span>
+<span id="cb35-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb35-2" aria-hidden="true" tabindex="-1"></a>matriz_contrastes2 <span class="ot">&lt;-</span> <span class="fu">makeContrasts</span>( <span class="at">dif1 =</span> Filtered_Air_NE <span class="sc">-</span> Formaldehyde_NE ,</span>
+<span id="cb35-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb35-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">dif2 =</span> Filtered_Air_WBC<span class="sc">-</span> Formaldehyde_WBC,</span>
+<span id="cb35-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb35-4" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">difT =</span> (Filtered_Air_NE <span class="sc">-</span> Formaldehyde_NE)</span>
+<span id="cb35-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb35-5" aria-hidden="true" tabindex="-1"></a>                                          <span class="sc">-</span> (Filtered_Air_WBC<span class="sc">-</span> Formaldehyde_WBC),</span>
+<span id="cb35-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb35-6" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">levels =</span> matriz2)</span>
+<span id="cb35-7"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb35-7" aria-hidden="true" tabindex="-1"></a>matriz_contrastes2</span></code></pre></div>
+<pre><code>##                   Contrasts
+## Levels             dif1 dif2 difT
+##   Filtered_Air_NE     1    0    1
+##   Filtered_Air_WBC    0    1   -1
+##   Formaldehyde_NE    -1    0   -1
+##   Formaldehyde_WBC    0   -1    1</code></pre>
+</div>
+<div id="estimación-empirical-bayes-statistics-for-differential-expression-1" class="section level2">
+<h2>Estimación (Empirical Bayes Statistics for Differential
+Expression):</h2>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb37-1" aria-hidden="true" tabindex="-1"></a>ajusteB2 <span class="ot">&lt;-</span> <span class="fu">contrasts.fit</span>(ajusteA2, matriz_contrastes2)</span>
+<span id="cb37-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb37-2" aria-hidden="true" tabindex="-1"></a>ajusteC2 <span class="ot">&lt;-</span> <span class="fu">eBayes</span>(ajusteB2)</span></code></pre></div>
+<p>&nbsp;</p>
+</div>
+<div id="resultados-1" class="section level2">
+<h2>Resultados:</h2>
+<div id="expresión-diferencial-en-células-epiteliales" class="section level3">
+<h3>Expresión diferencial en células epiteliales:</h3>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mostramos los genes con la expresión diferencial más significativa:</span></span>
+<span id="cb38-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb38-2" aria-hidden="true" tabindex="-1"></a>TT1 <span class="ot">&lt;-</span><span class="fu">topTable</span>(ajusteC2, <span class="at">coef =</span> <span class="dv">1</span>, <span class="at">adjust.method =</span><span class="st">"BH"</span>, <span class="at">number =</span> <span class="cn">Inf</span>,)</span>
+<span id="cb38-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(TT1, <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>##          ENTREZID  PROBEID       ENSEMBLTRANS GENSYMBOL            ENSAMBL
+## 13589111   694287 13589111 ENSMMUT00000033162     FAIM3 ENSMMUG00000023573
+## 13742642   708637 13742642 ENSMMUT00000021150      VNN2 ENSMMUG00000015091
+## 13730121   574346 13730121 ENSMMUT00000015762      CFTR ENSMMUG00000011269
+##               logFC   AveExpr         t      P.Value  adj.P.Val        B
+## 13589111 -0.9458473 11.117793 -6.266212 6.184801e-06 0.07695099 3.596523
+## 13742642  2.0668678  8.298578  5.826476 1.529998e-05 0.07695099 2.867700
+## 13730121  1.1897400  6.619750  5.764071 1.743339e-05 0.07695099 2.761607</code></pre>
+</div>
+<div id="expresión-diferencial-en-globulos-blancos" class="section level3">
+<h3>Expresión diferencial en globulos blancos:</h3>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mostramos los genes con la expresión diferencial más significativa:</span></span>
+<span id="cb40-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb40-2" aria-hidden="true" tabindex="-1"></a>TT2 <span class="ot">&lt;-</span> <span class="fu">topTable</span>(ajusteC2, <span class="at">coef =</span> <span class="dv">2</span>, <span class="at">adjust.method =</span><span class="st">"BH"</span>, <span class="at">number =</span> <span class="cn">Inf</span>)</span>
+<span id="cb40-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(TT2, <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>##           ENTREZID  PROBEID       ENSEMBLTRANS    GENSYMBOL            ENSAMBL
+## 13777230 100425012 13777230 ENSMMUT00000033466 LOC100425012               &lt;NA&gt;
+## 13685783    695191 13685783 ENSMMUT00000029831       COMMD6 ENSMMUG00000021199
+## 13596366    716200 13596366 ENSMMUT00000047066         DAB1 ENSMMUG00000022995
+##               logFC  AveExpr         t      P.Value adj.P.Val         B
+## 13777230 -1.3203627 7.941065 -4.559805 0.0002355249 0.9800863 -2.626946
+## 13685783  0.7943396 9.333978  4.444122 0.0003045130 0.9800863 -2.686565
+## 13596366  1.3726040 7.143210  4.343252 0.0003812117 0.9800863 -2.739625</code></pre>
+</div>
+<div id="expresión-diferencial-entre-ambos-tipos-celulares" class="section level3">
+<h3>Expresión diferencial entre ambos tipos celulares:</h3>
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Mostramos los genes con la expresión diferencial más significativa:</span></span>
+<span id="cb42-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb42-2" aria-hidden="true" tabindex="-1"></a>TT3 <span class="ot">&lt;-</span> <span class="fu">topTable</span>(ajusteC2, <span class="at">coef =</span> <span class="dv">3</span>, <span class="at">adjust.method =</span><span class="st">"BH"</span>, <span class="at">number =</span> <span class="cn">Inf</span>)</span>
+<span id="cb42-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(TT3, <span class="dv">3</span>)</span></code></pre></div>
+<pre><code>##          ENTREZID  PROBEID       ENSEMBLTRANS GENSYMBOL            ENSAMBL
+## 13725863   715138 13725863 ENSMMUT00000021496 LOC715138 ENSMMUG00000015332
+## 13834726   697648 13834726 ENSMMUT00000043190      LMO7 ENSMMUG00000001312
+## 13730121   574346 13730121 ENSMMUT00000015762      CFTR ENSMMUG00000011269
+##              logFC  AveExpr         t      P.Value adj.P.Val          B
+## 13725863  1.101110 7.858769  5.507690 2.995370e-05 0.2347529  0.5533745
+## 13834726 -0.866098 7.281013 -5.428557 3.545581e-05 0.2347529  0.4670891
+## 13730121  1.278015 6.619750  4.615056 2.083946e-04 0.6250029 -0.4809501</code></pre>
+<p>Observamos que para ninguno de los contrastes el p-valor ajustado es
+menor de 0,05, por lo que no podemos considerar que la exposición al
+formaldehído comporta cambios en la expresión de ninguno de los genes,
+ni en glóbulos blancos, ni en células del epitelio nasal.</p>
+<p>Podemos observar que los P valores ajustados más bajos se obtienen en
+el primer contraste, si fijamos un criterio menos restrictivo, y tomamos
+una FDR de 0.1, ¿cuantos genes se expresan diferencialmente tras el
+tratamiento en células del epitelio nasal?</p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(TT1<span class="sc">$</span>adj.P.Val <span class="sc">&lt;</span> <span class="fl">0.1</span>)</span></code></pre></div>
+<pre><code>## [1] 14</code></pre>
+<p>¿Cuáles son?</p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(TT1, <span class="dv">14</span>)</span></code></pre></div>
+<pre><code>##          ENTREZID  PROBEID       ENSEMBLTRANS GENSYMBOL            ENSAMBL
+## 13589111   694287 13589111 ENSMMUT00000033162     FAIM3 ENSMMUG00000023573
+## 13742642   708637 13742642 ENSMMUT00000021150      VNN2 ENSMMUG00000015091
+## 13730121   574346 13730121 ENSMMUT00000015762      CFTR ENSMMUG00000011269
+## 13725863   715138 13725863 ENSMMUT00000021496 LOC715138 ENSMMUG00000015332
+## 13834726   697648 13834726 ENSMMUT00000043190      LMO7 ENSMMUG00000001312
+## 13767076   693315 13767076 ENSMMUT00000010735     EDIL3 ENSMMUG00000007661
+## 13583605   707431 13583605 ENSMMUT00000023101    TSPAN1 ENSMMUG00000016452
+## 13817352   717148 13817352 ENSMMUT00000014867      CD1C ENSMMUG00000010626
+## 13655279   696843 13655279 ENSMMUT00000001784     MS4A1 ENSMMUG00000001260
+## 13722805   702488 13722805 ENSMMUT00000012277 LOC702488               &lt;NA&gt;
+## 13652890   711728 13652890 ENSMMUT00000011848     PANX3               &lt;NA&gt;
+## 13756250   574224 13756250 ENSMMUT00000032613    CXCL13 ENSMMUG00000023186
+## 13623825   708090 13623825 ENSMMUT00000013397 LOC708090 ENSMMUG00000009601
+## 13715780   705092 13715780 ENSMMUT00000004385 LOC705092 ENSMMUG00000065165
+##               logFC   AveExpr         t      P.Value  adj.P.Val        B
+## 13589111 -0.9458473 11.117793 -6.266212 6.184801e-06 0.07695099 3.596523
+## 13742642  2.0668678  8.298578  5.826476 1.529998e-05 0.07695099 2.867700
+## 13730121  1.1897400  6.619750  5.764071 1.743339e-05 0.07695099 2.761607
+## 13725863  0.8346942  7.858769  5.601473 2.455083e-05 0.07717544 2.482162
+## 13834726 -0.6565016  7.281013 -5.520640 2.914040e-05 0.07717544 2.341647
+## 13767076 -1.5218467  6.726559 -5.329997 4.378600e-05 0.09219664 2.006185
+## 13583605  0.8168143  8.074176  5.246546 5.239610e-05 0.09219664 1.857599
+## 13817352 -1.7309781  9.444004 -5.136685 6.643959e-05 0.09219664 1.660437
+## 13655279 -1.5845289 10.463785 -5.128314 6.765622e-05 0.09219664 1.645342
+## 13722805 -0.8078135  5.888375 -5.115091 6.962441e-05 0.09219664 1.621480
+## 13652890 -0.7904653  7.181578 -5.059803 7.850873e-05 0.09451023 1.521441
+## 13756250 -1.3611589  6.776792 -4.985402 9.232300e-05 0.09993919 1.386161
+## 13623825  0.6456559  5.609643  4.941501 1.016140e-04 0.09993919 1.305990
+## 13715780  1.7668815  6.276726  4.923648 1.056599e-04 0.09993919 1.273317</code></pre>
+<p>De este estudio podemos extraer, que, como es de esperar, la
+exposición a formaldehído presenta un mayor efecto en las células del
+epitelio nasal que están directamente en contacto con el aire. Con el
+fin de obtener más información acerca de su efecto sobre la expresión
+génica tanto a nivel general, como a nivel de glóbulos blancos, una
+estrategia interesante podría ser aumentar el tiempo de exposición a
+este mutágeno.<br>
+&nbsp;</p>
+</div>
+</div>
+<div id="incorporación-de-resultados-a-un-data-frame" class="section level2">
+<h2>Incorporación de resultados a un data frame</h2>
+<p>A continuación crearemos un data frame que recoja la información de
+nuestros genes y los p-valores obtenidos para los tres contrastes
+siendo:</p>
+<ul>
+<li><strong>Dif1</strong> -&gt; Control y exposición a formaldehído en
+células epiteliales.<br>
+</li>
+<li><strong>Dif2</strong> -&gt; Control y exposición a formaldehído en
+glóbulos blancos.<br>
+</li>
+<li><strong>DifT</strong> -&gt; Contraste de Dif1 y Dif2.</li>
+</ul>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-1" aria-hidden="true" tabindex="-1"></a>TT1_ord <span class="ot">=</span> <span class="fu">topTable</span>(ajusteC2, <span class="at">coef =</span> <span class="dv">1</span>, <span class="at">adjust.method =</span><span class="st">"BH"</span>,</span>
+<span id="cb48-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">sort.by =</span> <span class="st">"none"</span>, <span class="at">number =</span> <span class="cn">Inf</span>)</span>
+<span id="cb48-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-3" aria-hidden="true" tabindex="-1"></a>TT2_ord <span class="ot">=</span> <span class="fu">topTable</span>(ajusteC2, <span class="at">coef =</span> <span class="dv">2</span>, <span class="at">adjust.method =</span><span class="st">"BH"</span>,</span>
+<span id="cb48-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">sort.by =</span> <span class="st">"none"</span>, <span class="at">number =</span> <span class="cn">Inf</span>)</span>
+<span id="cb48-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-5" aria-hidden="true" tabindex="-1"></a>TT3_ord <span class="ot">=</span> <span class="fu">topTable</span>(ajusteC2, <span class="at">coef =</span> <span class="dv">3</span>, <span class="at">adjust.method =</span><span class="st">"BH"</span>,</span>
+<span id="cb48-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-6" aria-hidden="true" tabindex="-1"></a>                   <span class="at">sort.by =</span> <span class="st">"none"</span>, <span class="at">number =</span> <span class="cn">Inf</span>)</span>
+<span id="cb48-7"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-8"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-8" aria-hidden="true" tabindex="-1"></a><span class="co">#Creación del data frame con los p valores y los p valores ajustados.</span></span>
+<span id="cb48-9"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-9" aria-hidden="true" tabindex="-1"></a>df2 <span class="ot">=</span><span class="fu">cbind</span>(<span class="fu">fData</span>(geod75759_rma), <span class="at">Pvalue.dif1 =</span> TT1_ord<span class="sc">$</span>P.Value, </span>
+<span id="cb48-10"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">adj.Pvalue.dif1 =</span> TT1_ord<span class="sc">$</span>adj.P.Val, <span class="at">Pvalue.dif2 =</span> TT2_ord<span class="sc">$</span>P.Value,</span>
+<span id="cb48-11"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">adj.Pvalue.dif2 =</span> TT2_ord<span class="sc">$</span>adj.P.Val, <span class="at">Pvalue.difT =</span> TT3_ord<span class="sc">$</span>P.Value,</span>
+<span id="cb48-12"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">adj.Pvalue.difT =</span> TT3_ord<span class="sc">$</span>adj.P.Val)</span>
+<span id="cb48-13"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb48-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df2)</span></code></pre></div>
+<pre><code>##       ENTREZID  PROBEID       ENSEMBLTRANS GENSYMBOL            ENSAMBL
+## 7517    699677 13579638 ENSMMUT00000032498    LRPAP1 ENSMMUG00000023099
+## 23063   720098 13579671 ENSMMUT00000011722 LOC720098 ENSMMUG00000008383
+## 23901   722333 13579689 ENSMMUT00000001640 LOC722333               &lt;NA&gt;
+## 23905   722339 13579692 ENSMMUT00000047703 LOC722339               &lt;NA&gt;
+## 23906   722345 13579703 ENSMMUT00000001638 LOC722345 ENSMMUG00000048558
+## 23914   722353 13579724 ENSMMUT00000001629 LOC722353 ENSMMUG00000001156
+##       Pvalue.dif1 adj.Pvalue.dif1 Pvalue.dif2 adj.Pvalue.dif2 Pvalue.difT
+## 7517  0.228449386       0.8153709   0.9716761       0.9995833  0.37732182
+## 23063 0.899331689       0.9906439   0.5156283       0.9995833  0.59734662
+## 23901 0.002015348       0.2835044   0.8647743       0.9995833  0.01178594
+## 23905 0.502095701       0.9125248   0.7244409       0.9995833  0.78888579
+## 23906 0.504499576       0.9136937   0.2131590       0.9995833  0.18808093
+## 23914 0.244508542       0.8251570   0.6854315       0.9995833  0.54165562
+##       adj.Pvalue.difT
+## 7517        0.9414727
+## 23063       0.9690143
+## 23901       0.7827704
+## 23905       0.9871046
+## 23906       0.9122768
+## 23914       0.9589726</code></pre>
+<p>&nbsp;</p>
+</div>
+<div id="generación-de-informe-1" class="section level2">
+<h2>Generación de informe:</h2>
+<p>En este informe mostramos únicamente los genes que muestran cierta
+expresión diferencial en las células epiteliales para un FDR de 0.1.</p>
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-1" aria-hidden="true" tabindex="-1"></a>final_data <span class="ot">=</span> df2[df2<span class="sc">$</span>adj.Pvalue.dif1 <span class="sc">&lt;</span> <span class="fl">0.1</span>,]</span>
+<span id="cb50-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-3" aria-hidden="true" tabindex="-1"></a>ID <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(final_data<span class="sc">$</span>PROBEID), <span class="cn">NA</span>, final_data<span class="sc">$</span>PROBEID)</span>
+<span id="cb50-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-5" aria-hidden="true" tabindex="-1"></a>entrezid <span class="ot">=</span> final_data<span class="sc">$</span>ENTREZID</span>
+<span id="cb50-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-6" aria-hidden="true" tabindex="-1"></a>ENTREZID<span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(entrezid), <span class="cn">NA</span>,</span>
+<span id="cb50-7"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-7" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">paste0</span>(<span class="st">"&lt;a href='http://www.ncbi.nlm.nih.gov/gene/?term="</span>,</span>
+<span id="cb50-8"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-8" aria-hidden="true" tabindex="-1"></a>                  entrezid,<span class="st">"'&gt;"</span>,entrezid,<span class="st">"&lt;/a&gt;"</span>))</span>
+<span id="cb50-9"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-10"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-10" aria-hidden="true" tabindex="-1"></a>ensemblT <span class="ot">=</span> final_data<span class="sc">$</span>ENSEMBLTRANS</span>
+<span id="cb50-11"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-11" aria-hidden="true" tabindex="-1"></a>ENSEMBLTRANS <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensemblT), <span class="cn">NA</span>,</span>
+<span id="cb50-12"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-12" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">"&lt;a href='http://www.ensembl.org/"</span>,</span>
+<span id="cb50-13"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-13" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"Macaca_mulatta/Transcript/Idhistory?t="</span>,</span>
+<span id="cb50-14"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-14" aria-hidden="true" tabindex="-1"></a>                             ensemblT ,<span class="st">"'&gt;"</span>,ensemblT,<span class="st">"&lt;/a&gt;"</span>))</span>
+<span id="cb50-15"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-16"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-16" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">=</span> final_data<span class="sc">$</span>ENSAMBL</span>
+<span id="cb50-17"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-17" aria-hidden="true" tabindex="-1"></a>ENSAMBL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(ensembl), <span class="cn">NA</span>,</span>
+<span id="cb50-18"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-18" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">paste0</span>(<span class="st">"&lt;a href='http://www.ensembl.org/Macaca_mulatta"</span>,</span>
+<span id="cb50-19"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-19" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"/Gene/Summary?db=core;g="</span>,</span>
+<span id="cb50-20"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-20" aria-hidden="true" tabindex="-1"></a>                             ensembl ,<span class="st">"'&gt;"</span>,ensembl,<span class="st">"&lt;/a&gt;"</span>))</span>
+<span id="cb50-21"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-22"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb50-22" aria-hidden="true" tabindex="-1"></a>GENSYMBOL <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(final_data<span class="sc">$</span>GENSYMBOL), <span class="cn">NA</span>, final_data<span class="sc">$</span>GENSYMBOL)</span></code></pre></div>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-1" aria-hidden="true" tabindex="-1"></a>info2 <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">ID=</span><span class="fu">as.character</span>(final_data<span class="sc">$</span>PROBEID), <span class="at">EntrezID =</span> ENTREZID, </span>
+<span id="cb51-2"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">EnsemblT=</span>ENSEMBLTRANS,</span>
+<span id="cb51-3"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-3" aria-hidden="true" tabindex="-1"></a>                  <span class="at">EnsemblGen =</span> ENSAMBL, <span class="at">GenSymbol =</span> GENSYMBOL,</span>
+<span id="cb51-4"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">Pvalue.dif1 =</span> final_data<span class="sc">$</span>Pvalue.dif1,</span>
+<span id="cb51-5"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">adj.Pvalue.dif1 =</span> final_data<span class="sc">$</span>adj.Pvalue.dif1,</span>
+<span id="cb51-6"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">Pvalue.dif2 =</span> final_data<span class="sc">$</span>Pvalue.dif2,</span>
+<span id="cb51-7"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">adj.Pvalue.dif2 =</span> final_data<span class="sc">$</span>adj.Pvalue.dif2,</span>
+<span id="cb51-8"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-8" aria-hidden="true" tabindex="-1"></a>                  <span class="at">Pvalue.difT =</span> final_data<span class="sc">$</span>Pvalue.difT,</span>
+<span id="cb51-9"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-9" aria-hidden="true" tabindex="-1"></a>                  <span class="at">adj.Pvalue.difT =</span> final_data<span class="sc">$</span>adj.Pvalue.difT,</span>
+<span id="cb51-10"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-10" aria-hidden="true" tabindex="-1"></a>                  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span> )</span>
+<span id="cb51-11"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-12"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-12" aria-hidden="true" tabindex="-1"></a>f_out2 <span class="ot">=</span> <span class="st">"T2_limma.DE"</span></span>
+<span id="cb51-13"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-13" aria-hidden="true" tabindex="-1"></a>report_dir2 <span class="ot">=</span> <span class="st">"Reports/"</span></span>
+<span id="cb51-14"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-14" aria-hidden="true" tabindex="-1"></a>titulo2 <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">"geod75759"</span>,<span class="st">" : Analisis limma para dos covariables."</span>)</span>
+<span id="cb51-15"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-16"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-16" aria-hidden="true" tabindex="-1"></a>report2 <span class="ot">=</span> ReportingTools<span class="sc">::</span><span class="fu">HTMLReport</span>(<span class="at">shortName =</span> f_out2, <span class="at">title =</span> titulo2,</span>
+<span id="cb51-17"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-17" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">reportDirectory =</span> report_dir2)</span>
+<span id="cb51-18"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-18" aria-hidden="true" tabindex="-1"></a><span class="fu">publish</span>(info2,report2)</span>
+<span id="cb51-19"><a href="file:///C:/Users/roxya/OneDrive/Documentos/Paquete_R/PacRoxanaMoldovan/vignettes/tarea2.html#cb51-19" aria-hidden="true" tabindex="-1"></a><span class="fu">finish</span>(report2)</span></code></pre></div>
+<pre><code>## [1] "Reports//T2_limma.DE.html"</code></pre>
+<p>&nbsp;</p>
+<hr>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+
+
+</body></html>

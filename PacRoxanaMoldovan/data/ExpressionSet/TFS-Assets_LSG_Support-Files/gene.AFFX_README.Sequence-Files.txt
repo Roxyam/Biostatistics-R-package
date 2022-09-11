@@ -1,0 +1,239 @@
+README for Affymetrix Gene Array Sequence files.
+
+Copyright 2007-==YEAR==, Affymetrix Inc.
+All Rights Reserved
+
+The content of Affymetrix array sequence files is covered by the
+terms of use or license located at http://www.affymetrix.com/site/terms.affx
+
+Array/chip type:         ==ARRAY_TYPE==
+
+Contents
+--------
+
+I. Note regarding genome assembly version
+
+II. Probe Sequence Files
+   A. Probe fasta file
+      1. Description line attributes
+      2. Example entry
+   B. Probe tabular file
+      1. Column header line
+      2. Example entry
+   C. Array design categories
+
+III. Transcript Cluster Sequence File
+   A. Transcript cluster fasta file
+      1. Description line attributes
+      2. Example entry
+
+I. Note regarding genome assembly version
+------------------------------------------
+
+The genome assembly version for the array design data included in the
+data file bundled with this readme is indicated both in the data file
+name, which contains a genome version identifier (e.g., ".hg18."
+for data based on the UCSC hg18 build) and within each data line 
+within the files (tab column, or fasta description). The data lines
+may contain alternative identifiers for the genome assembly version,
+such as the NCBI build and the UCSC version id, separated by a forward
+slash (e.g., "build-36/hg18"). 
+
+Array designs are occasionally mapped or "lifted" to an updated
+version of the genome assembly for improved annotation by the NetAffx
+Analysis Center. Some of the array sequences may fail to be mapped to
+the updated genome version. In this case, the information in the data
+line for the unmappable sequences will be based on the original
+design-time genome version that the array design was based on.
+
+The lines at the top of this readme labeled "Genome assembly, design" and 
+"Genome assembly, annot" indicate the design-time vs. annotation-time
+version of the genome assembly on which the data in this file may be
+based. The annotation-time genome corresponds the the version
+currently used by the NetAffx Analysis Center.
+
+You can tell whether or not the array sequence data file is based on a
+mapped array design by inspecting the file name which will indicate
+the associated genome assembly version (as described above). If the
+file name contains an assembly identifier corresponding to the
+annotation-time genome version and this version is different from the
+design-time genome version, then the information in the file has been
+mapped, and the unmappable sequence data will be from the design-time
+genome version. Otherwise, all data in the file are based on the
+original design-time genome version. In either case, the genome
+assembly version for a given data line will always be specified in the
+line itself.
+
+Data potentially affected by the genome assembly version includes:
+
+  * genome location: chromosome (seqname), start, stop, strand
+  * transcript cluster sequence (consists of spliced exon clusters)
+
+Probe sequences themselves are not affected by the genome assembly
+version since they are fixed at array design time.
+
+
+II. Probe Sequence Files
+-----------------------
+
+All probe sequences, in both fasta and tabular format, are provided in
+the orientation they exist on the array and in the 5'->3'
+direction. For a sense target (st) array such as the gene and exon
+arrays, this corresponds to the reverse complement of the orientation
+of the target mRNA sequence.
+
+The probe sequence files include control probes in addition to
+all probes from the main design.
+
+Note that for gene array designs, a given probe located at a given x
+and y location on the array may be associated with more than one
+transcript cluster. Therefore, a probe ID may occur more than once
+with both the probe tab and fasta files. However, each probe ID +
+transcript cluster ID combination is unique within these files.
+
+II.A. Probe fasta file
+
+   The probe fasta file contains all probe sequences from the array in
+   fasta format. A unique identifier for each sequence is composed of
+   'probe' followed by the array type followed by the probe ID and
+   transcript cluster ID separated by a hyphen followed by the x and y
+   position of the probe on the array, with each of these items
+   separated by a colon ':' character. The identifier is termined by a
+   semicolon ';'. See example below.
+
+   II.A.1. Description line attributes
+
+   Additional attributes for each probe are included in the
+   description line in tag=value pairs. The following tags are
+   provided: 
+
+      Attribute                Description
+    -------------          ------------------------------------------
+      ProbeID               Probe identifier (integer)
+      TranscriptClusterID   Transcript Cluster identifier (integer)
+      Assembly              Genome assembly version
+      Seqname               Sequence name for genomic location of probe (chromosome)
+      Start                 Starting coordinate of probe genomic location (1-based)
+      Stop                  Ending coordinate of probe genomic location (1-based)
+      Strand                Sequence strand of probe genomic location (+ or -)
+      Sense/Antisense       Strandedness of the target which the probe detects
+      category              Array design category of the probe (described below)
+
+     * Note: The sense/antisense field is the only one that is not
+       tag=value, but is either the string 'Sense' or 'Antisense'. 
+
+   II.A.2. Example entry
+
+   Shown is an example fasta formatted probe sequence entry from the
+   human gene array. 
+
+>probe:HuGene-1_0-st-v1:438514-7896736;663:417; ProbeID=438514; TranscriptClusterID=7896736; Assembly=build-36/hg18; Seqname=chr1; Start=44767; Stop=44791; Strand=+; Sense; category=main
+AATGGCTTGTCCCTGTATTCTCAGC
+
+
+II.B. Probe tabular file
+
+   The probe tabular data file contains all probe sequences from the
+   array in tab-delimited format. Column headers are indicated in the
+   first line.
+
+   II.B.1. Column header line
+
+      Column Name                        Description
+    -----------------       ------------------------------------------
+      Probe ID               Probe identifier (integer)
+      Transcript Cluster ID  Transcript Cluster identifier (integer)
+      probe x                X coordinate for probe location on array
+      probe y                Y coordinate for probe location on array
+      assembly               Genome assembly version
+      seqname                Sequence name for genomic location of probe (chromosome)
+      start                  Starting coordinate of probe genomic location (1-based)
+      stop                   Ending coordinate of probe genomic location (1-based)
+      strand                 Sequence strand of probe genomic location (+ or -)
+      probe sequence         Probe sequence
+      target strandedness    Strandedness of the target which the probe detects
+      category               Array design category of the probe (described below)
+
+   II.B.2. Example entry
+
+   Shown is an example column header line and data line from the human
+   gene array. 
+
+Probe ID	Transcript Cluster ID	probe x	probe y	assembly	seqname	start	stop	strand	probe sequence	target strandedness	category
+438514	7896736	663	417	build-36/hg18	chr1	44767	44791	+	AATGGCTTGTCCCTGTATTCTCAGC	Sense	main
+
+   
+II.C. Array design categories
+
+    Both the probe fasta and tab files contain an indication of the
+    array design category of each probe. Here is a description of the
+    different types of categories.
+
+              Category                   Description
+       ------------------------    --------------------------------------
+        main                       part of the main design 
+        control->affx              a standard AFFX control
+        control->chip              a chip control
+        control->bgp->antigenomic  antigenomic background probes
+        control->bgp->genomic      genomic background probes 
+        normgene->exon             from an exonic region of a
+                                   normalization control gene   
+        normgene->intron           from an intronic region of a
+                                   normalization control gene 
+        rescue->FLmRNA->unmapped   probes were tiled across an mRNA
+                                   transcript which either did not align
+                                   to the genome, or aligned poorly  
+
+
+III. Transcript Cluster Sequence File
+-------------------------------------
+
+Transcript cluster sequences are created by removing all intronic
+regions from the transcript cluster sequence and splicing
+together all constituent exons into a single sequence for each
+transcript cluster. They are provided in the orientation they exist in
+the mRNA in 5'->3' direction.
+
+The length given for the transcript cluster sequence is the total
+length of all spliced exon clusters within the transcript cluster,
+removing any intronic sequence. This will differ from the length
+obtained by taking the difference between the start and stop
+genomic coordinates for the transcript cluster, which would include
+any intronic sequence.
+
+The transcript cluster sequence file does not include any
+controls, only entries from the main design. 
+
+III.A. Transcript cluster fasta file
+
+   The transcript cluster fasta sequence file contains transcript
+   cluster sequences from the array in fasta format. The identifier is
+   composed of 'transcript_cluster' followed by the array type
+   followed by the transcript cluster ID, with each of these items
+   separate by a colon ':' character. The identifier is termined by a
+   semicolon ';'.
+
+   III.A.1. Description line attributes
+
+   Additional attributes for each transcript cluster are included in
+   the description line in tag=value pairs. The following tags are
+   provided:
+
+      Attribute                Description
+    -------------    ------------------------------------------
+      Assembly        Genome assembly version
+      Seqname         Sequence name for genomic location of TC (chromosome)
+      Start           Starting coordinate of TC genomic location (1-based)
+      Stop            Ending coordinate of TC genomic location (1-based)
+      Strand          Sequence strand of TC genomic location (+ or -)
+      Length          Length of concatenated exon clusters in the TC
+
+   III.A.2. Example entry
+
+   Shown is an example fasta formatted transcript cluster sequence
+   entry from the human gene array. 
+
+>transcript_cluster:HuGene-1_0-st-v1:7896742; Assembly=build-36/hg18; Seqname=chr1; Start=323992; Stop=324159; Strand=+; Length=168;
+CTGCAGGACAAGTTCGAGCATCTTAAAATGATTCAACAGGAGGAGATAAGGAAGCTCGAG
+GAAGAGAAAAAACAACTGGAAGGAGAAATCATAGATTTTTATAAAATGAAAGCTGCCTCT
+GAAGCACTGCAGACTCAGCTGAGCACCGATACAAAGAAAGACAAACAT

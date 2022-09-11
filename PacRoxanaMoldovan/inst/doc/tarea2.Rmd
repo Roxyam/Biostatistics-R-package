@@ -1,0 +1,526 @@
+---
+title: "Tarea 2. Expresión diferencialen microarrays."
+author: "Roxana Andreea Moldovan Moldovan"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tarea2}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+doAll = TRUE
+dir_datos = "../data/"
+```
+
+***  
+
+# 1. Introducción  
+
+En esta tarea llevaremos a cabo un análisis de la expresión diferencial
+a partir de los datos de la **Tarea 1** (disponibles en ArrayExpress: [E-GEOD-75759](https://www.ebi.ac.uk/arrayexpress/experiments/E-GEOD-75759), y
+GEO: [GSE75759](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE75759)).  
+En este estudio se analizaba el patrón de expresión génica mediante microarrays
+de 14 primates 8 de los cuales fueron expuestos dos días
+consecutivos, durante 6 hora, a dosis de entre 6 y 6,5 ppm de formaldehído,
+mientras que 6 fueron expuestos únicamente a aire filtrado (control).  
+Por otro lado, también encontramos dos grupos en función del tejido de
+procedencia de las muestras ya que por un lado tenemos glóbulos blancos y por
+otro células del epitelio nasal.   
+&nbsp;
+
+***  
+
+# 2. Carga de datos.  
+
+## Paquetes empleados:  
+```{R, Paquetes, eval=doAll, warning=FALSE}
+pacman::p_load(ArrayExpress, genefilter, limma)
+pacman::p_load(ReportingTools)
+```
+
+## Carga de datos del experimento.
+
+```{R, Datos, eval=doAll, warning=FALSE}
+datos="geod75759_rma.rda"
+load(paste(dir_datos, datos, sep=""))
+```
+  
+&nbsp;
+
+# 3. Analisis de expresión diferencial.
+
+```{R, pData, eval=doAll, warning=FALSE}
+# Datos fenotípicos de la primera muestra:
+(pData(geod75759_rma)[1,])
+```  
+&nbsp;  
+
+Como hemos explicado anteriormente tenemos datos relativos de expresión bajo
+dos condiciones experimentales y dos tipos de tejidos.  
+Para el análisis de la expresión diferencial nos centraremos en primer lugar
+en el efecto del formaldehído en la expresión, para ello tomaremos la variable
+fenotípica _**Sample_treatment**_ que presenta dos niveles:  
+
+  * **Formaldehyde** -> Sujetos expuestos a formaldehído.   
+  * **Filtered_Air** -> Sujetos expuestos a aire filtrado.   
+  
+  
+```{R, Def_factor, eval=doAll, warning=FALSE}
+# Tomamos el factor a estudiar
+tratamiento <- factor(pData(geod75759_rma)$Sample_treatment)
+```  
+
+&nbsp;
+
+## T-test
+
+En primer lugar, utilizando _**rowttests**_ del paquete _**genefilter**_
+llevaremos a cabo una un test de la t fila por fila, es decir para cada uno
+de los genes, asumiendo igualdad de varianzas.   
+
+```{R, T_test, eval=doAll, warning=FALSE}
+# Test de la t:
+tt <- genefilter::rowttests(geod75759_rma, tratamiento)
+head(tt)
+
+```  
+ 
+ 
+En el t-test parao obtenemos la siguiente información:  
+
+  * **statistic** -> Estadístico t del contraste de hipótesis para la igualdad 
+                     de las medias (asumiendo igualdad de varianzas).  
+  * **dm**        -> Diferencia de medias entre grupos.
+  * **p.value**   -> p-valor del contraste.
+
+A partir del p value obtenido, comparándolo con un nivel de significación
+_alfa_, que fijaremos en 0,05, podemos determinar cuantos genes presentan
+expresión diferencial.  
+
+  
+```{R, P_valor, eval=doAll, warning=FALSE}
+# P.value:
+alfa = 0.05  # Fijamos un alfa de 0,05
+pv_original = tt$p.value
+table( pv_original <= alfa)
+```  
+  
+Encontramos que para 242 de los 13242 se ha obtenido un p-value menor de 0,05,
+es decir que 242 genes muestran expresión diferencial entre los grupos de
+tratamiento.   
+Los más significativos son:   
+
+```{R, Significativos, eval=doAll, warning=FALSE}
+
+# Mostramos los genes más significativos:
+sig <- tt[order(tt$p.value),]
+head(sig)
+
+```  
+&nbsp;
+
+## Ajuste de los p_values  
+
+En este punto procederemos a ajustar los p-valores originales obtenidos en
+el t-test a través de dos métodos.  
+
+### Método de Bonferroni  
+
+```{R, Bonferroni, eval=doAll, warning=FALSE}
+
+# Ajustamos por el método de Bonferroni:
+pv_Bf <- p.adjust(tt$p.value, method = "bonferroni")
+# Mostramos los genes significativos:
+table( pv_Bf < alfa)
+
+```
+
+Tras el ajuste de los p-valores originales por el método de **Bonferroni**, y
+fijando un **FDR** de 0.05 ninguno de los resultados parece significativo, por
+lo que no habría expresión diferencial entre los dos niveles de tratamiento. 
+
+
+### Método de Benjamini-Hochberg
+
+```{R, Benjamini-Hochberg, eval=doAll, warning=FALSE}
+
+# Ajustamos por el método de Benjamini-Hochberg:
+pv_BH <- p.adjust(pv_original, method = "BH")
+# Mostramos los genes significativos:
+table( pv_BH < alfa)
+
+```
+
+Tras el ajuste de los p-valores originales por el método de 
+**Benjamini-Hochberg** y , al igual que en el caso anterior, tomando un **FDR**
+de 0.05, no se podría afirmar que tenemos expresión diferencial tras el 
+tratamiento para ningún gen.  
+
+&nbsp;
+
+## Incorporación de resultados a un data frame.
+
+A continuación crearemos un data frame que recoja tanto la anotación de 
+nuestros genes (contenido en fData), como los p-valores obtenidos en el test de
+la t, y los p valores ajustados mediante Bonferroni y  Benjamini-Hochberg.
+
+```{R, Data_frame, eval=doAll, warning=FALSE}
+
+#Creación del data frame:
+df1 =cbind(fData(geod75759_rma), Pvalue = pv_original, 
+           adj.Pval.Bf =pv_Bf, adj.Pval.BH=pv_BH)
+head(df1)
+
+```  
+
+
+## Generación de informe:
+
+A pesar de no haber obtenido genes significativos, mostramos los resultados del
+test de la T en un informe:
+
+```{R, Parametros_Informe, eval=doAll, warning=FALSE}
+final_data = df1
+
+ID = ifelse(is.na(final_data$PROBEID), NA, final_data$PROBEID)
+
+entrezid = final_data$ENTREZID
+ENTREZID= ifelse(is.na(entrezid), NA,
+                 paste0("<a href='http://www.ncbi.nlm.nih.gov/gene/?term=",
+                  entrezid,"'>",entrezid,"</a>"))
+
+ensemblT = final_data$ENSEMBLTRANS
+ENSEMBLTRANS = ifelse(is.na(ensemblT), NA,
+                      paste0("<a href='http://www.ensembl.org/",
+                             "Macaca_mulatta/Transcript/Idhistory?t=",
+                             ensemblT ,"'>",ensemblT,"</a>"))
+
+ensembl = final_data$ENSAMBL
+ENSAMBL = ifelse(is.na(ensembl), NA,
+                      paste0("<a href='http://www.ensembl.org/Macaca_mulatta",
+                             "/Gene/Summary?db=core;g=",
+                             ensembl ,"'>",ensembl,"</a>"))
+
+GENSYMBOL = ifelse(is.na(final_data$GENSYMBOL), NA, final_data$GENSYMBOL)
+
+```
+
+```{R, Informe, eval=doAll, warning=FALSE}
+info = data.frame(ID=as.character(final_data$PROBEID), EntrezID = ENTREZID, 
+                  EnsemblT=ENSEMBLTRANS,
+                  EnsemblGen = ENSAMBL, GenSymbol = GENSYMBOL,
+                  Pvalue = final_data$Pvalue,
+                  adj.Pval.bonferroni = as.numeric(final_data$adj.Pval.Bf),
+                  adj.Pval.BH = as.numeric(final_data$adj.Pval.BH), 
+                  stringsAsFactors = F )
+
+f_out = "T2_Ttest.DE"
+report_dir = "Reports/"
+titulo = paste0("geod75759"," : Analisis de expresion ",
+                "diferencial (t-test con varianzas iguales)")
+
+report1 = ReportingTools::HTMLReport(shortName = f_out, title = titulo,
+                                     reportDirectory = report_dir)
+publish(info,report1)
+finish(report1)
+```    
+
+&nbsp;   
+
+***  
+
+# 3. Test de la t moderada  
+
+Empleando el paquete _**limma**_ para analizar la dependencia de la expresión
+a las distintas variables.
+
+## Matriz de diseño:
+Para ello lo primero será determinar la matriz de diseño, en esta cada fila se
+corresponderá con una muestra y se indicará con un 0 o un 1 a que grupo
+pertenece según el factor escogido (0=Control, 1=Tratado con formaldehído).  
+
+```{R, Matriz, eval=doAll, warning=FALSE}
+
+tratamiento <- pData(geod75759_rma)$Sample_treatment
+
+# Matriz de diseño:
+matriz <- model.matrix(~ 0 + tratamiento)
+colnames(matriz) <- c( "Formaldehido", "Control")
+matriz
+
+```
+
+## Ajuste de los modelos lineales:
+
+Usamos la función **lmFit** para ajustar los modelos lineales por mínimos
+cuadrados ponderados o generalizados, ajusta un modelo para cada  una de las
+sondas.  
+
+```{R, Modelos_lineales, eval=doAll, warning=FALSE}
+ajusteA <- lmFit(geod75759_rma, matriz)
+matriz_contrastes <- makeContrasts( dif = Control - Formaldehido,
+                                    levels = matriz)
+matriz_contrastes
+```
+
+
+## Estimación (Empirical Bayes Statistics for Differential Expression):
+
+**contrasts.fit** permite calcular los coeficientes estimados y los errores
+estándar para un conjunto de datos dada la matriz de diseño y el ajuste de
+los modelos lineales obtenido en el paso anterior.   
+A continuación, con el fin de clasificar los genes en orden de evidencia de
+expresión diferencial, aplicamos **eBayes** al objeto previamente ajustado, 
+este computa el **test de la t moderada**, las estadísticas F moderadas y las
+probabilidades logarítmicas de la expresión diferencial mediante la
+moderación empírica de Bayes de los errores estándar hacia un valor global.
+
+
+```{R, Estimacion, eval=doAll, warning=FALSE}
+
+ajusteB <- contrasts.fit(ajusteA, matriz_contrastes)
+ajusteC <- eBayes(ajusteB)
+```  
+
+## Resultados  
+
+Ajustamos el p-valor obtenido por el método de **Benjamini-Hochberg** y 
+obtenemos que los genes con expresión diferencial más significativa son:  
+
+
+```{R, Significativo_limma, eval=doAll, warning=FALSE}
+
+sig <- topTable(ajusteC, number = 10, coef = 1, adjust.method ="BH")
+sig
+```
+
+Observamos que en ninguno de los casos el p-valor ajustado es menor que 0,05
+por lo que no habría dependencia entre la exposición al formaldehído y los
+niveles de expresión de los genes.
+
+&nbsp;  
+
+***   
+
+# 4. Análisis limma para dos covariables
+
+Además del tratamiento, en este estudio disponemos de una segunda
+variable fenotípica de tipo factor que describe el tejido de proveniencia
+de las muestras:
+
+  * **WBC** ->    _Circulating white blood cells_
+  * **NE**  ->    _Nasal epithleium_
+  
+En este apartado emplearemos _**limma**_ para llevar a cabo un análisis de
+expresión diferencial sobre dos covariables, el tejido de proveniencia y la
+exposición a formaldehído con el fin de obtener la siguiente información:   
+
+  + Genes que muestran expresión diferencial según el tejido de proveniencia.  
+  + Genes que muestran expresión diferencial tras la exposición al formaldehído.  
+  + Genes que se expresan diferencialmente tras la exposición a formaldehído en
+  glóbulos blancos **WBC**, con respecto al epitelio nasal **NE**.  
+
+```{R, Variables, eval=doAll, warning=FALSE}
+# Tomamos las variables a estudiar.
+tratamiento <- factor(pData(geod75759_rma)$Sample_treatment)
+tejido <- factor(pData(geod75759_rma)$Sample_type)
+
+table(tratamiento, tejido)
+```  
+
+Con fines prácticos construimos una solo factor que recoja la información
+de las posibles combinaciones entre los dos factores previamente mencionados.   
+
+```{R, Combinar_factores, eval=doAll, warning=FALSE}  
+
+# Creamos una función que concatene y asigne los nombres:
+concat <- function(x, t=tratamiento, tj=tejido){ #Numero de fila
+  a = paste(t[x], tj[x],sep="_")
+  a
+}
+
+# Creamos la variable factor:
+fac = lapply(list(1:ncol(geod75759_rma)), FUN=concat)
+trat_tej = factor(unlist(fac))
+trat_tej
+
+```
+
+## Matriz de diseño:  
+
+```{R, Matriz_2factores, eval=doAll, warning=FALSE}
+
+# Determinamos la matriz de diseño:
+matriz2 <- model.matrix(~ 0 + trat_tej)
+colnames(matriz2) <- levels(trat_tej)
+matriz2
+```
+
+## Ajuste de los modelos lineales:  
+
+```{R, Modelos_lineales2, eval=doAll, warning=FALSE}
+# Ajuste:
+ajusteA2 <- lmFit(geod75759_rma, matriz2)
+```
+
+```{R, Contrastes2 , eval=doAll, warning=FALSE}
+#Construcción de los contrastes:
+matriz_contrastes2 <- makeContrasts( dif1 = Filtered_Air_NE - Formaldehyde_NE ,
+                                     dif2 = Filtered_Air_WBC- Formaldehyde_WBC,
+                                     difT = (Filtered_Air_NE - Formaldehyde_NE)
+                                          - (Filtered_Air_WBC- Formaldehyde_WBC),
+                                     levels = matriz2)
+matriz_contrastes2
+```
+
+## Estimación (Empirical Bayes Statistics for Differential Expression):   
+
+```{R, Estimacion2, eval=doAll, warning=FALSE}
+
+ajusteB2 <- contrasts.fit(ajusteA2, matriz_contrastes2)
+ajusteC2 <- eBayes(ajusteB2)
+```
+
+&nbsp;
+
+## Resultados: 
+
+### Expresión diferencial en células epiteliales:  
+
+```{R, Sig1_limma2, eval=doAll, warning=FALSE}
+# Mostramos los genes con la expresión diferencial más significativa:
+TT1 <-topTable(ajusteC2, coef = 1, adjust.method ="BH", number = Inf,)
+head(TT1, 3)
+```  
+
+### Expresión diferencial en globulos blancos:
+
+```{R, Sig2_limma2, eval=doAll, warning=FALSE}
+# Mostramos los genes con la expresión diferencial más significativa:
+TT2 <- topTable(ajusteC2, coef = 2, adjust.method ="BH", number = Inf)
+head(TT2, 3)
+```  
+
+### Expresión diferencial entre ambos tipos celulares:
+```{R, Sig3_limma2, eval=doAll, warning=FALSE}
+# Mostramos los genes con la expresión diferencial más significativa:
+TT3 <- topTable(ajusteC2, coef = 3, adjust.method ="BH", number = Inf)
+head(TT3, 3)
+
+```
+
+Observamos que para ninguno de los contrastes el p-valor ajustado es menor
+de 0,05, por lo que no podemos considerar que la exposición al formaldehído
+comporta cambios en la expresión de ninguno de los genes, ni en glóbulos
+blancos, ni en células del epitelio nasal.  
+
+Podemos observar que los P valores ajustados más bajos se obtienen en el primer
+contraste, si fijamos un criterio menos restrictivo, y tomamos una FDR de 
+0.1, ¿cuantos genes se expresan diferencialmente tras el tratamiento en 
+células del epitelio nasal?  
+
+```{R, Sig1_limma2_relax, eval=doAll, warning=FALSE}
+sum(TT1$adj.P.Val < 0.1)
+```   
+¿Cuáles son?  
+
+```{R, Sig1_limma2_num, eval=doAll, warning=FALSE}
+head(TT1, 14)
+```  
+
+De este estudio podemos extraer, que, como es de esperar, la exposición a
+formaldehído presenta un mayor efecto en las células del epitelio nasal que 
+están directamente en contacto con el aire. Con el fin de obtener más
+información acerca de su efecto sobre la expresión génica tanto a nivel 
+general, como a nivel de glóbulos blancos, una estrategia interesante podría
+ser aumentar el tiempo de exposición a este mutágeno.     
+&nbsp;
+
+## Incorporación de resultados a un data frame
+
+A continuación crearemos un data frame que recoja la información de 
+nuestros genes y los p-valores obtenidos para los tres contrastes siendo:  
+
+  + **Dif1** -> Control y exposición a formaldehído en células epiteliales.   
+  + **Dif2** -> Control y exposición a formaldehído en glóbulos blancos.   
+  + **DifT** -> Contraste de Dif1 y Dif2.    
+
+```{R, Data_frame2, eval=doAll, warning=FALSE}
+TT1_ord = topTable(ajusteC2, coef = 1, adjust.method ="BH",
+                   sort.by = "none", number = Inf)
+TT2_ord = topTable(ajusteC2, coef = 2, adjust.method ="BH",
+                   sort.by = "none", number = Inf)
+TT3_ord = topTable(ajusteC2, coef = 3, adjust.method ="BH",
+                   sort.by = "none", number = Inf)
+
+#Creación del data frame con los p valores y los p valores ajustados.
+df2 =cbind(fData(geod75759_rma), Pvalue.dif1 = TT1_ord$P.Value, 
+           adj.Pvalue.dif1 = TT1_ord$adj.P.Val, Pvalue.dif2 = TT2_ord$P.Value,
+           adj.Pvalue.dif2 = TT2_ord$adj.P.Val, Pvalue.difT = TT3_ord$P.Value,
+           adj.Pvalue.difT = TT3_ord$adj.P.Val)
+head(df2)
+
+```  
+
+&nbsp;
+
+## Generación de informe:   
+
+En este informe mostramos únicamente los genes que muestran cierta expresión 
+diferencial en las células epiteliales para  un FDR de 0.1.
+
+```{R, Parametros_Informe2, eval=doAll, warning=FALSE}
+final_data = df2[df2$adj.Pvalue.dif1 < 0.1,]
+
+ID = ifelse(is.na(final_data$PROBEID), NA, final_data$PROBEID)
+
+entrezid = final_data$ENTREZID
+ENTREZID= ifelse(is.na(entrezid), NA,
+                 paste0("<a href='http://www.ncbi.nlm.nih.gov/gene/?term=",
+                  entrezid,"'>",entrezid,"</a>"))
+
+ensemblT = final_data$ENSEMBLTRANS
+ENSEMBLTRANS = ifelse(is.na(ensemblT), NA,
+                      paste0("<a href='http://www.ensembl.org/",
+                             "Macaca_mulatta/Transcript/Idhistory?t=",
+                             ensemblT ,"'>",ensemblT,"</a>"))
+
+ensembl = final_data$ENSAMBL
+ENSAMBL = ifelse(is.na(ensembl), NA,
+                      paste0("<a href='http://www.ensembl.org/Macaca_mulatta",
+                             "/Gene/Summary?db=core;g=",
+                             ensembl ,"'>",ensembl,"</a>"))
+
+GENSYMBOL = ifelse(is.na(final_data$GENSYMBOL), NA, final_data$GENSYMBOL)
+
+```
+
+```{R, Informe2, eval=doAll, warning=FALSE}
+info2 = data.frame(ID=as.character(final_data$PROBEID), EntrezID = ENTREZID, 
+                  EnsemblT=ENSEMBLTRANS,
+                  EnsemblGen = ENSAMBL, GenSymbol = GENSYMBOL,
+                  Pvalue.dif1 = final_data$Pvalue.dif1,
+                  adj.Pvalue.dif1 = final_data$adj.Pvalue.dif1,
+                  Pvalue.dif2 = final_data$Pvalue.dif2,
+                  adj.Pvalue.dif2 = final_data$adj.Pvalue.dif2,
+                  Pvalue.difT = final_data$Pvalue.difT,
+                  adj.Pvalue.difT = final_data$adj.Pvalue.difT,
+                  stringsAsFactors = FALSE )
+
+f_out2 = "T2_limma.DE"
+report_dir2 = "Reports/"
+titulo2 = paste0("geod75759"," : Analisis limma para dos covariables.")
+
+report2 = ReportingTools::HTMLReport(shortName = f_out2, title = titulo2,
+                                     reportDirectory = report_dir2)
+publish(info2,report2)
+finish(report2)
+```  
+
+&nbsp;  
+
+***
